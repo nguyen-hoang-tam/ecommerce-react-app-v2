@@ -1,11 +1,11 @@
-import React from 'react';
-import { Button, Form, Input, Typography, Divider, message } from 'antd';
+import React, { useState } from 'react';
+import { Button, Form, Input, Typography, Divider, message, Spin } from 'antd';
 import { GoogleOutlined } from '@ant-design/icons';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Link , useNavigate} from 'react-router-dom';
 import imgBg from '@/assets/img_bg.png';
 import { useDispatch } from 'react-redux';
-import { loginAPI, getUserProfile } from '@/features/auth/authAPI';
+import { loginAPI, getUserProfile, loginWithGoogleAPI} from '@/features/auth/authAPI';
 import { authStart, authSuccess, authFailure, setProfile } from '../../../features/auth/authSlice' 
 
 function Signin() {
@@ -38,6 +38,31 @@ function Signin() {
     console.log('Failed:', errorInfo);
   };
 
+  const handleGoogleLogin = async () => {
+  dispatch(authStart());
+
+  try {
+    const { user, token } = await loginWithGoogleAPI();
+    const profile = await getUserProfile(user.uid);
+
+    dispatch(authSuccess({ user, token }));
+    dispatch(setProfile(profile));
+
+    message.success('Đăng nhập Google thành công!');
+    navigate('/home');
+  } catch (error) {
+    dispatch(authFailure(error.message));
+
+    if (error.code === 'auth/popup-closed-by-user') {
+      message.warning('Bạn đã đóng cửa sổ đăng nhập.');
+    } else if (error.code === 'auth/popup-blocked') {
+      message.error('Popup bị chặn. Vui lòng cho phép popup!');
+    } else if (error.code === 'auth/cancelled-popup-request') {
+    } else {
+      message.error('Đăng nhập Google thất bại!');
+    }
+  }
+};
 
   return (
     <div
@@ -114,7 +139,7 @@ function Signin() {
               block
               icon={<GoogleOutlined />}
               style={{ borderColor: '#dadce0', color: '#5f6368' }}
-              onClick={() => console.log('Login with Google')}
+              onClick={ handleGoogleLogin}
             >
               Đăng nhập SSO với Google
             </Button>

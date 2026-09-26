@@ -7,7 +7,6 @@ import { registerAPI, getUserProfile } from '@/features/auth/authAPI';
 import { useDispatch } from 'react-redux';
 import { authStart, authSuccess, authFailure, setProfile } from '../../../features/auth/authSlice' 
 
-
 function Register() {
     const [form] = Form.useForm();
     const dispatch = useDispatch();
