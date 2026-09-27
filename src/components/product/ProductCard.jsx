@@ -2,13 +2,21 @@
 import { Button, Card, Tag } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function ProductCard({ product }) {
-  const { id, name, price, image, brand } = product;
+    const { id, name, price, image, brand } = product;
+    const navigate = useNavigate();
+
+  const handleClickCard = () => {
+    navigate(`/productdetail/${id}`);
+  };
+
 
   return (
     <Card
       hoverable
+       onClick={handleClickCard}
       style={{ width: '100%', borderRadius: 12, overflow: 'hidden' }}
       styles={{ body: { padding: 16 } }}
       cover={
@@ -35,6 +43,7 @@ function ProductCard({ product }) {
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              color: 'black'
             }}
           >
             {name}
@@ -57,10 +66,17 @@ function ProductCard({ product }) {
           </Button>
           
         <Button
+        onClick={handleClickCard}
         type="primary"
         block
         size="large"
-      >
+          style={{
+          background: '#101010',
+          color: '#fff',
+          fontWeight: '200'
+          
+          }}
+        >
         Mua ngay
         </Button>
       </div>
