@@ -21,7 +21,8 @@ function Signin() {
       values.password,
     );
 
-    const profile = await getUserProfile(user.uid);
+      const profile = await getUserProfile(user.uid);
+      console.log (profile)
 
     dispatch(authSuccess({ user, token }));
     dispatch(setProfile(profile));
