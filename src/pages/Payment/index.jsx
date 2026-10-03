@@ -16,10 +16,12 @@ import {
 import OptionCard from '../../components/card/OptionCard';
 import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts } from '@/features/product/productSlice';
+import { fetchProducts, fetchProductById } from '@/features/product/productSlice';
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Button, Divider, Breadcrumb, Radio, Spin } from 'antd';
-import { fetchProductById } from '@/features/product/productSlice';
+import {
+  Card, Row, Col, Typography, Button, Divider, Breadcrumb, Radio,
+  Spin, Form, Modal, Input, message,
+} from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -39,26 +41,48 @@ export const paymentMethods = [
 function Payment() {
   const [shipping, setShipping] = useState('standard');
   const [payment, setPayment] = useState('cod');
+  const [quantity, setQuantity] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form] = Form.useForm();
+
+  const dispatch = useDispatch();
+  const { id } = useParams();
 
   const { profile } = useSelector((state) => state.auth);
+  const { currentProduct: product, isLoading, error } = useSelector((state) => state.products);
 
-    const dispatch = useDispatch();
-    const { id } = useParams();
-  
-   const { currentProduct: product, items, isLoading, error } = useSelector(
-    (state) => state.products
-  );
+  useEffect(() => {
+    if (id) dispatch(fetchProductById(id));
+    dispatch(fetchProducts());
+  }, [dispatch, id]);
 
-    useEffect(() => {
-    dispatch(fetchProductById(id)); 
-    dispatch(fetchProducts());       
-    }, [dispatch, id]);
-    
-    const relatedProducts = items.filter((p) => p.id !== id).slice(0, 6);
+  const selectedMethod = shippingMethods.find((m) => m.id === shipping);
+  const shippingFee = selectedMethod?.price || 0;
+  const selectedPayment = paymentMethods.find((m) => m.id === payment);
 
+  const handleOpenModal = () => setIsModalOpen(true);
 
-    if (error) return <p>Lỗi: {error}</p>;
-    
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    form.resetFields();
+  };
+
+  const handleSubmit = async (values) => {
+    setIsSubmitting(true);
+    try {
+      console.log('Địa chỉ mới:', values);
+      message.success('Thêm địa chỉ thành công!');
+      handleCloseModal();
+    } catch (err) {
+      message.error('Có lỗi xảy ra!');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (error) return <p>Lỗi: {error}</p>;
+
   if (isLoading || !product) {
     return (
       <AppLayout>
@@ -66,7 +90,7 @@ function Payment() {
           <Spin size="large" />
         </div>
       </AppLayout>
-    )
+    );
   }
 
   return (
@@ -91,26 +115,30 @@ function Payment() {
                 <Radio checked />
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Text strong>{ profile?.fullname || 'Chưa có tên'}</Text>
+                    <Text strong>{profile?.fullname || profile?.displayName || 'Chưa có tên'}</Text>
                     <span style={{ background: '#e6f0ff', color: '#001529', fontSize: 12, padding: '2px 8px', borderRadius: 4 }}>Mặc định</span>
                   </div>
-                  <div style={{ color: '#666', fontSize: 13, marginTop: 4 }}>{ profile?.phone || 'Chưa có SĐT'}</div>
-                  <div style={{ color: '#666', fontSize: 13, marginTop: 2 }}>Số 123 Nguyễn Văn Cừ, Quận Long Biên, Hà Nội</div>
+                  <div style={{ color: '#666', fontSize: 13, marginTop: 4 }}>{profile?.phone || 'Chưa có SĐT'}</div>
+                  <div style={{ color: '#666', fontSize: 13, marginTop: 2 }}>{profile?.address || 'Chưa có địa chỉ'}</div>
                 </div>
-                <EditOutlined style={{ fontSize: 18, color: '#666', cursor: 'pointer' }} />
+                <EditOutlined  onClick={handleOpenModal} style={{ fontSize: 18, color: '#666', cursor: 'pointer' }} />
               </div>
 
-              <Button type="dashed" block icon={<PlusOutlined />} style={{ marginTop: 12, height: 48, borderRadius: 8 }}>
+              <Button
+                onClick={handleOpenModal}
+                type="dashed"
+                block
+                icon={<PlusOutlined />}
+                style={{ marginTop: 12, height: 48, borderRadius: 8 }}
+              >
                 Thêm địa chỉ mới
               </Button>
             </Card>
 
             <Card style={{ borderRadius: 10, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div>
-                  <Title level={4} style={{ margin: 0, fontSize: 16 }}>Phương thức giao hàng</Title>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Chọn phương thức giao hàng phù hợp với bạn.</Text>
-                </div>
+              <div style={{ marginBottom: 16 }}>
+                <Title level={4} style={{ margin: 0, fontSize: 16 }}>Phương thức giao hàng</Title>
+                <Text type="secondary" style={{ fontSize: 12 }}>Chọn phương thức giao hàng phù hợp với bạn.</Text>
               </div>
 
               <Row gutter={[10, 10]}>
@@ -123,22 +151,18 @@ function Payment() {
             </Card>
 
             <Card style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <div style={{ marginBottom: 8 }}>
                 <Title level={4} style={{ margin: 0 }}>Phương thức thanh toán</Title>
               </div>
 
               <Text type="secondary">Chọn phương thức thanh toán theo nhu cầu của bạn.</Text>
 
               <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
-                {paymentMethods.map((item) => {
-                  const isSelected = payment === item.id;
-
-                  return (
-                    <Col xs={12} md={6} key={item.id}>
-                         <OptionCard item={item} isSelected={shipping === item.id} onSelect={() => setShipping(item.id)} />
-                    </Col>
-                  );
-                })}
+                {paymentMethods.map((item) => (
+                  <Col xs={12} md={6} key={item.id}>
+                    <OptionCard item={item} isSelected={payment === item.id} onSelect={() => setPayment(item.id)} />
+                  </Col>
+                ))}
               </Row>
             </Card>
 
@@ -164,7 +188,7 @@ function Payment() {
             <Card style={{ borderRadius: 12, position: 'sticky', top: 24 }} styles={{ body: { padding: 24 } }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Title level={5} style={{ margin: 0 }}>Đơn hàng của bạn</Title>
-                <Text type="secondary">1 sản phẩm</Text>
+                <Text type="secondary">{quantity} sản phẩm</Text>
               </div>
 
               <div style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
@@ -176,30 +200,40 @@ function Payment() {
                 <div style={{ flex: 1 }}>
                   <div>{product?.name || 'Chưa có sản phẩm'}</div>
                   <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>Màu: Đen</div>
-                  <div style={{ color: '#111', fontWeight: 600, marginTop: 4 }}>{ product.brand}</div>
+                  <div style={{ color: '#111', fontWeight: 600, marginTop: 4 }}>{product?.brand}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e5e5e5', borderRadius: 6, padding: '2px 8px' }}>
-                    <span style={{ cursor: 'pointer', fontSize: 14, userSelect: 'none' }}>−</span>
-                    <span style={{ minWidth: 20, textAlign: 'center', fontSize: 13 }}>1</span>
-                    <span style={{ cursor: 'pointer', fontSize: 14, userSelect: 'none' }}>+</span>
+                    <span onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ cursor: 'pointer', userSelect: 'none' }}>−</span>
+                    <span style={{ minWidth: 20, textAlign: 'center', fontSize: 13 }}>{quantity}</span>
+                    <span onClick={() => setQuantity(quantity + 1)} style={{ cursor: 'pointer', userSelect: 'none' }}>+</span>
                   </div>
-                  <div style={{ fontWeight: 700, marginTop: 8 }}>3.500.000đ</div>
+                  <div style={{ fontWeight: 700, marginTop: 8 }}>
+                    {(product?.price * quantity)?.toLocaleString('vi-VN')}đ
+                  </div>
                 </div>
               </div>
 
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Tạm tính</Text>
-                  <Text>3.500.000đ</Text>
+                  <Text>{(product?.price * quantity)?.toLocaleString('vi-VN')}đ</Text>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Phí vận chuyển</Text>
-                  <Text style={{ color: '#52c41a' }}>Miễn phí</Text>
+                  {shippingFee === 0 ? (
+                    <Text style={{ color: '#52c41a' }}>Miễn phí</Text>
+                  ) : (
+                    <Text>{shippingFee.toLocaleString('vi-VN')}đ</Text>
+                  )}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Giảm giá</Text>
                   <Text>- 0đ</Text>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Text type="secondary">Phương thức giao hàng</Text>
+                  <Text>{selectedPayment?.title}</Text>
                 </div>
               </div>
 
@@ -207,7 +241,9 @@ function Payment() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Title level={5} style={{ margin: 0 }}>Tổng cộng</Title>
-                <span style={{ fontSize: 22, fontWeight: 700, color: '#001529' }}>3.500.000đ</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: '#001529' }}>
+                  {((product?.price * quantity) + shippingFee)?.toLocaleString('vi-VN')}đ
+                </span>
               </div>
 
               <div style={{ marginTop: 16, padding: 12, background: '#f0f5ff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
@@ -229,9 +265,65 @@ function Payment() {
             </Card>
           </Col>
         </Row>
+
+        <Modal
+          title="Thêm địa chỉ mới"
+          open={isModalOpen}
+          onCancel={handleCloseModal}
+          footer={null}
+          width={500}
+          centered
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleSubmit}
+            style={{ marginTop: 16 }}
+          >
+            <Form.Item
+              name="fullname"
+              label="Họ và tên"
+              rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
+            >
+              <Input size="large" placeholder="Nguyễn Văn A" />
+            </Form.Item>
+
+            <Form.Item
+              name="phone"
+              label="Số điện thoại"
+              rules={[
+                { required: true, message: 'Vui lòng nhập SĐT!' },
+                { pattern: /^[0-9]{10,11}$/, message: 'SĐT không hợp lệ!' },
+              ]}
+            >
+              <Input size="large" placeholder="0912345678" />
+            </Form.Item>
+
+            <Form.Item
+              name="address"
+              label="Địa chỉ"
+              rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
+            >
+              <Input.TextArea rows={3} size="large" placeholder="Số nhà, đường, quận, thành phố" />
+            </Form.Item>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <Button size="large" onClick={handleCloseModal}>Hủy</Button>
+              <Button
+                type="primary"
+                size="large"
+                htmlType="submit"
+                loading={isSubmitting}
+                style={{ background: '#001529', borderColor: '#001529' }}
+              >
+                Lưu địa chỉ
+              </Button>
+            </div>
+          </Form>
+        </Modal>
       </main>
     </AppLayout>
   );
-  }
+}
 
 export default Payment;
