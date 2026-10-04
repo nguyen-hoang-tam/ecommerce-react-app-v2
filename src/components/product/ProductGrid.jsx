@@ -4,7 +4,7 @@ function Grid({
   items = [],
   isLoading = false,
   renderItem,
-  columns = { xs: 24, sm: 12, md: 8, lg: 6 },
+  columns = { xs: 24, sm: 12, md: 8, lg: 4 },
   emptyText = 'Chưa có dữ liệu',
   skeletonCount = 6,
   skeletonHeight = 220,

@@ -3,7 +3,6 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   PlusOutlined,
-  EditOutlined,
   CarOutlined,
   ThunderboltOutlined,
   ShopOutlined,
@@ -14,12 +13,13 @@ import {
   TagOutlined,
 } from '@ant-design/icons';
 import OptionCard from '../../components/card/OptionCard';
+import OptionAddress from '../../components/card/OptionAddress';
 import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, fetchProductById } from '@/features/product/productSlice';
+import { fetchProductById } from '@/features/product/productSlice';
 import { useState, useEffect } from 'react';
 import {
-  Card, Row, Col, Typography, Button, Divider, Breadcrumb, Radio,
+  Card, Row, Col, Typography, Button, Divider, Breadcrumb,
   Spin, Form, Modal, Input, message,
 } from 'antd';
 
@@ -43,7 +43,7 @@ function Payment() {
   const [payment, setPayment] = useState('cod');
   const [quantity, setQuantity] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
   const [form] = Form.useForm();
 
   const dispatch = useDispatch();
@@ -54,31 +54,54 @@ function Payment() {
 
   useEffect(() => {
     if (id) dispatch(fetchProductById(id));
-    dispatch(fetchProducts());
   }, [dispatch, id]);
+
+  const defaultAddress = {
+    id: 'default',
+    name: profile?.fullname || 'Chưa có tên',
+    phone: profile?.phone || 'Chưa có SĐT',
+    address: profile?.address || 'Chưa có địa chỉ',
+    isDefault: true,
+  };
 
   const selectedMethod = shippingMethods.find((m) => m.id === shipping);
   const shippingFee = selectedMethod?.price || 0;
   const selectedPayment = paymentMethods.find((m) => m.id === payment);
 
-  const handleOpenModal = () => setIsModalOpen(true);
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    form.resetFields();
+  const handleAddAddress = () => {
+  setEditingAddress(null);
+  setIsModalOpen(true);
   };
 
-  const handleSubmit = async (values) => {
-    setIsSubmitting(true);
-    try {
-      console.log('Địa chỉ mới:', values);
+  const handleEditAddress = (address) => {
+  setEditingAddress(address);
+  setIsModalOpen(true);
+  };
+  
+  const handleCloseModal = () => {
+  setIsModalOpen(false);
+  setEditingAddress(null);
+  };
+
+  const [addressList, setAddressList] = useState([defaultAddress]);
+  const [selectedAddress, setSelectedAddress] = useState(defaultAddress.id);
+
+   const handleSubmit = (values) => {
+    if (editingAddress) {
+      setAddressList(addressList.map((a) =>
+        a.id === editingAddress.id ? { ...a, ...values } : a
+      ));
+      message.success('Cập nhật địa chỉ thành công!');
+    } else {
+      const newAddress = {
+        id: Date.now().toString(),
+        ...values,
+        isDefault: false,
+      };
+      setAddressList([...addressList, newAddress]);
       message.success('Thêm địa chỉ thành công!');
-      handleCloseModal();
-    } catch (err) {
-      message.error('Có lỗi xảy ra!');
-    } finally {
-      setIsSubmitting(false);
     }
+    handleCloseModal();
   };
 
   if (error) return <p>Lỗi: {error}</p>;
@@ -105,32 +128,19 @@ function Payment() {
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
             <Card style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-                <Title level={4} style={{ margin: 0 }}>Địa chỉ nhận hàng</Title>
-              </div>
-
+              <Title level={4} style={{ margin: 0 }}>Địa chỉ nhận hàng</Title>
               <Text type="secondary">Vui lòng kiểm tra và xác nhận thông tin địa chỉ giao hàng của bạn.</Text>
+              {addressList.map((address) => (
+                <OptionAddress
+                  onEdit={handleEditAddress}
+                  key={address.id}
+                  item={address}
+                  isSelected={selectedAddress === address.id}
+                  onSelect={() => setSelectedAddress(address.id)}
+                />
+              ))}
 
-              <div style={{ marginTop: 16, padding: 16, border: '1px solid #2e9aff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12, background: '#f0f5ff' }}>
-                <Radio checked />
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Text strong>{profile?.fullname || profile?.displayName || 'Chưa có tên'}</Text>
-                    <span style={{ background: '#e6f0ff', color: '#001529', fontSize: 12, padding: '2px 8px', borderRadius: 4 }}>Mặc định</span>
-                  </div>
-                  <div style={{ color: '#666', fontSize: 13, marginTop: 4 }}>{profile?.phone || 'Chưa có SĐT'}</div>
-                  <div style={{ color: '#666', fontSize: 13, marginTop: 2 }}>{profile?.address || 'Chưa có địa chỉ'}</div>
-                </div>
-                <EditOutlined  onClick={handleOpenModal} style={{ fontSize: 18, color: '#666', cursor: 'pointer' }} />
-              </div>
-
-              <Button
-                onClick={handleOpenModal}
-                type="dashed"
-                block
-                icon={<PlusOutlined />}
-                style={{ marginTop: 12, height: 48, borderRadius: 8 }}
-              >
+              <Button onClick={handleAddAddress} type="dashed" block icon={<PlusOutlined />} style={{ marginTop: 12, height: 48, borderRadius: 8 }}>
                 Thêm địa chỉ mới
               </Button>
             </Card>
@@ -154,7 +164,6 @@ function Payment() {
               <div style={{ marginBottom: 8 }}>
                 <Title level={4} style={{ margin: 0 }}>Phương thức thanh toán</Title>
               </div>
-
               <Text type="secondary">Chọn phương thức thanh toán theo nhu cầu của bạn.</Text>
 
               <Row gutter={[12, 12]} style={{ marginTop: 16 }}>
@@ -172,13 +181,7 @@ function Payment() {
                 Quay lại giỏ hàng
               </Link>
 
-              <Button
-                type="primary"
-                size="large"
-                style={{ background: '#001529', borderColor: '#001529', padding: '0 40px' }}
-                icon={<ArrowRightOutlined />}
-                iconPosition="end"
-              >
+              <Button type="primary" size="large" style={{ background: '#001529', borderColor: '#001529', padding: '0 40px' }} icon={<ArrowRightOutlined />} iconPosition="end">
                 Đặt hàng
               </Button>
             </div>
@@ -192,11 +195,7 @@ function Payment() {
               </div>
 
               <div style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
-                <img
-                  src={product?.image || 'https://picsum.photos/300/300?random=6'}
-                  alt={product?.name || 'Sản phẩm'}
-                  style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover' }}
-                />
+                <img src={product?.image || 'https://picsum.photos/300/300?random=6'} alt={product?.name || 'Sản phẩm'} style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover' }} />
                 <div style={{ flex: 1 }}>
                   <div>{product?.name || 'Chưa có sản phẩm'}</div>
                   <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>Màu: Đen</div>
@@ -221,11 +220,7 @@ function Payment() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Phí vận chuyển</Text>
-                  {shippingFee === 0 ? (
-                    <Text style={{ color: '#52c41a' }}>Miễn phí</Text>
-                  ) : (
-                    <Text>{shippingFee.toLocaleString('vi-VN')}đ</Text>
-                  )}
+                  {shippingFee === 0 ? <Text style={{ color: '#52c41a' }}>Miễn phí</Text> : <Text>{shippingFee.toLocaleString('vi-VN')}đ</Text>}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Giảm giá</Text>
@@ -266,56 +261,46 @@ function Payment() {
           </Col>
         </Row>
 
-        <Modal
-          title="Thêm địa chỉ mới"
-          open={isModalOpen}
-          onCancel={handleCloseModal}
-          footer={null}
-          width={500}
-          centered
-        >
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={handleSubmit}
-            style={{ marginTop: 16 }}
-          >
-            <Form.Item
-              name="fullname"
-              label="Họ và tên"
-              rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}
-            >
+        <Modal title="Thêm địa chỉ mới" open={isModalOpen} onCancel={handleCloseModal} footer={null} width={500} centered>
+          <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 16 }}>
+            <Form.Item name="name" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
               <Input size="large" placeholder="Nguyễn Văn A" />
             </Form.Item>
 
-            <Form.Item
-              name="phone"
-              label="Số điện thoại"
-              rules={[
-                { required: true, message: 'Vui lòng nhập SĐT!' },
-                { pattern: /^[0-9]{10,11}$/, message: 'SĐT không hợp lệ!' },
-              ]}
-            >
+            <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập SĐT!' }, { pattern: /^[0-9]{10,11}$/, message: 'SĐT không hợp lệ!' }]}>
               <Input size="large" placeholder="0912345678" />
             </Form.Item>
 
-            <Form.Item
-              name="address"
-              label="Địa chỉ"
-              rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}
-            >
+            <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}>
               <Input.TextArea rows={3} size="large" placeholder="Số nhà, đường, quận, thành phố" />
             </Form.Item>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
               <Button size="large" onClick={handleCloseModal}>Hủy</Button>
-              <Button
-                type="primary"
-                size="large"
-                htmlType="submit"
-                loading={isSubmitting}
-                style={{ background: '#001529', borderColor: '#001529' }}
-              >
+              <Button type="primary" size="large" htmlType="submit" style={{ background: '#001529', borderColor: '#001529' }}>
+                Lưu địa chỉ
+              </Button>
+            </div>
+          </Form>
+        </Modal>
+
+         <Modal title="Chỉnh sửa địa chỉ" open={editingAddress} onCancel={handleCloseModal} footer={null} width={500} centered>
+          <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 16 }}>
+            <Form.Item name="name" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
+              <Input size="large" placeholder="Nguyễn Văn A" />
+            </Form.Item>
+
+            <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập SĐT!' }, { pattern: /^[0-9]{10,11}$/, message: 'SĐT không hợp lệ!' }]}>
+              <Input size="large" placeholder="0912345678" />
+            </Form.Item>
+
+            <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}>
+              <Input.TextArea rows={3} size="large" placeholder="Số nhà, đường, quận, thành phố" />
+            </Form.Item>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <Button size="large" onClick={handleCloseModal}>Hủy</Button>
+              <Button type="primary" size="large" htmlType="submit" style={{ background: '#001529', borderColor: '#001529' }}>
                 Lưu địa chỉ
               </Button>
             </div>

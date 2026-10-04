@@ -6,7 +6,7 @@ function OptionCard({ item, isSelected, onSelect }) {
       onClick={onSelect}
       style={{
         padding: 16,
-        border: isSelected ? '2px solid #0084ff' : '1px solid #e5e5e5',
+        border: isSelected ? '2px solid #2e9aff' : '1px solid #e5e5e5',
         borderRadius: 8,
         background: isSelected ? '#f0f5ff' : '#fff',
         height: '100%',

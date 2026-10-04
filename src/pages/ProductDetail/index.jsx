@@ -1,13 +1,12 @@
 import AppLayout from '../../components/layout/AppLayout';
 import { Card, Row, Col, Typography, Button, Divider, Image, Breadcrumb, Spin } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { ShoppingCartOutlined, HeartOutlined, StarOutlined } from '@ant-design/icons';
+import { ShoppingCartOutlined} from '@ant-design/icons';
 import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import { fetchProducts, fetchProductById } from '@/features/product/productSlice';
-import { Grid } from '../../components/product';
-import { RelatedProductCard } from '../../components/product';
+import { Grid } from '../../components/product';import { RelatedProductCard } from '../../components/product';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text, Paragraph } = Typography;
