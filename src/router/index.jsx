@@ -4,6 +4,8 @@ import Register from '@/pages/Auth/register';
 import Home from '../pages/Home/index';
 import ProductDetail from '../pages/ProductDetail/index'
 import Payment from '../pages/Payment/index'
+import OrderSuccess from '../pages/OrderSuccess/index'
+import AddToCartSuccess from '../pages/AddToCartSuccess/index'
 
 
 export const router = createBrowserRouter([
@@ -26,5 +28,13 @@ export const router = createBrowserRouter([
   {
     path: '/payment/:id',
     element: <Payment />,
+  },
+   {
+    path: '/ordersuccess',
+    element: <OrderSuccess />,
+  },
+   {
+    path: '/addtocart/:id',
+    element: <AddToCartSuccess />,
   },
 ]);

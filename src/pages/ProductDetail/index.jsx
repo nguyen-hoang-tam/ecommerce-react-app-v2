@@ -6,7 +6,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import { fetchProducts, fetchProductById } from '@/features/product/productSlice';
-import { Grid } from '../../components/product';import { RelatedProductCard } from '../../components/product';
+import { Grid } from '../../components/product';
+import { RelatedProductCard } from '../../components/product';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text, Paragraph } = Typography;
@@ -17,6 +18,10 @@ function ProductDetail() {
     const handleClickCard = () => {
     navigate(`/Payment/${id}`);
   }; 
+
+  const handleAddToCart = () => { 
+    navigate(`/addtocart/${id}`);
+  }
     const dispatch = useDispatch();
     const { id } = useParams();
   
@@ -82,6 +87,7 @@ function ProductDetail() {
 
               <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
                 <Button
+                  onClick={handleAddToCart}
                   size="large"
                   icon={<ShoppingCartOutlined />}
                   style={{ borderColor: '#101010', color: '#101010' }}
