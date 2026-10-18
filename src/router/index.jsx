@@ -6,6 +6,7 @@ import ProductDetail from '../pages/ProductDetail/index'
 import Payment from '../pages/Payment/index'
 import OrderSuccess from '../pages/OrderSuccess/index'
 import AddToCartSuccess from '../pages/AddToCartSuccess/index'
+import ShoppingCart from '../pages/ShoppingCart/index'
 
 
 export const router = createBrowserRouter([
@@ -36,5 +37,9 @@ export const router = createBrowserRouter([
    {
     path: '/addtocart/:id',
     element: <AddToCartSuccess />,
+  },
+  {
+    path: '/shoppingcart',
+    element: <ShoppingCart />,
   },
 ]);

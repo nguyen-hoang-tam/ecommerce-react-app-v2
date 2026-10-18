@@ -9,18 +9,29 @@ import { fetchProducts, fetchProductById } from '@/features/product/productSlice
 import { Grid } from '../../components/product';
 import { RelatedProductCard } from '../../components/product';
 import { useNavigate } from 'react-router-dom';
+import { addToCart } from '../../features/cartSlice/index'
 
 const { Title, Text, Paragraph } = Typography;
 
 function ProductDetail() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
     const handleClickCard = () => {
     navigate(`/Payment/${id}`);
   }; 
 
   const handleAddToCart = () => { 
+    const cartItem = {
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    image: product.image,
+    brand: product.brand,
+    quantity: 1
+  };
     navigate(`/addtocart/${id}`);
+    dispatch(addToCart(cartItem)); 
+    console.log('Product add to cart', cartItem)
   }
     const dispatch = useDispatch();
     const { id } = useParams();

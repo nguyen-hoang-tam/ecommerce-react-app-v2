@@ -1,6 +1,6 @@
 import React from 'react';
 import AppLayout from '../../components/layout/AppLayout';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link, useParams } from 'react-router-dom';
 import {
   CheckOutlined,
   HomeOutlined,
@@ -18,6 +18,8 @@ import { Card, Row, Col, Typography, Button, Divider, Image, Result } from 'antd
 const { Title, Text } = Typography;
 
 function OrderSuccess() {
+
+  const { id } = useParams()
   const navigate = useNavigate();
   const location = useLocation();
 

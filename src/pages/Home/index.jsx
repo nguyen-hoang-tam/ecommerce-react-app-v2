@@ -41,7 +41,7 @@ function Homepage() {
             </Link>
           </div>
           <div style={{ width: '50%', height: '100%', overflow: 'hidden' }}>
-            <img src={bannerImg} alt="Eyewear" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+            <img src={bannerImg} alt="Eyewea" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
           </div>
         </section>
     

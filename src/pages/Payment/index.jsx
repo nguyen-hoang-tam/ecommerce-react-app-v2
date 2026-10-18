@@ -1,31 +1,24 @@
-import AppLayout from '../../components/layout/AppLayout';
+import React, { useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
-  PlusOutlined,
-  CarOutlined,
-  ThunderboltOutlined,
-  ShopOutlined,
-  CreditCardOutlined,
-  BankOutlined,
-  WalletOutlined,
-  SafetyCertificateOutlined,
-  TagOutlined,
+  Card, Row, Col, Typography, Button, Divider, Breadcrumb,
+  Spin, Form, Modal, Input, message
+} from 'antd';
+import {
+  ArrowLeftOutlined, ArrowRightOutlined, PlusOutlined,
+  CarOutlined, ThunderboltOutlined, ShopOutlined,
+  CreditCardOutlined, BankOutlined, WalletOutlined,
+  SafetyCertificateOutlined, TagOutlined,
 } from '@ant-design/icons';
+
+import AppLayout from '../../components/layout/AppLayout';
 import OptionCard from '../../components/card/OptionCard';
 import OptionAddress from '../../components/card/OptionAddress';
 import VoucherModal from '../../components/modal/VoucherModal';
-import { Link, useParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import { fetchProductById } from '@/features/product/productSlice';
-import { getVouchersAPI, getVoucherByCodeAPI } from './../../features/auth/voucherAPI';
-import { createOrderAPI } from './../../features/order/orderAPI'
-import { useState, useEffect } from 'react';
-import {
-  Card, Row, Col, Typography, Button, Divider, Breadcrumb,
-  Spin, Form, Modal, Input, message,
-} from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { getVouchersAPI } from '@/features/auth/voucherAPI';
+import { createOrderAPI } from '@/features/order/orderAPI';
 
 const { Title, Text } = Typography;
 
@@ -43,104 +36,28 @@ export const paymentMethods = [
 ];
 
 function Payment() {
-  const [shipping, setShipping] = useState('standard');
-  const [payment, setPayment] = useState('cod');
-  const [quantity, setQuantity] = useState(1);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(null);
-  const [form] = Form.useForm();
-  const [isVoucherOpen, setIsVoucherOpen] = useState(false);
-
-  const [vouchers, setVouchers] = useState([]);
-  const [isVoucherLoading, setIsVoucherLoading] = useState(false);
-  const [voucherCode, setVoucherCode] = useState('');
-
-  const [discount, setDiscount] = useState(0);
-  const [appliedVoucher, setAppliedVoucher] = useState(null);
-
-  const navigate = useNavigate();
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { id } = useParams();
-
-  const handleApplyVoucher = (voucher) => {
-    const subtotal = (product?.price || 0) * quantity;
-  
-    if (subtotal < voucher.minOrder) {
-      message.error(`Đơn tối thiểu ${voucher.minOrder.toLocaleString('vi-VN')}đ!`);
-      return;
-    }
-  
-    if (voucher.usageCount >= voucher.usageLimit) {
-      message.error('Mã đã hết lượt sử dụng!');
-      return;
-    }
-  
-    let discountAmount = discount;
-    if (voucher.type === 'fixed') {
-      discountAmount = voucher.value;
-    } else {
-      discountAmount = Math.min((subtotal * voucher.value) / 100, voucher.maxDiscount);
-    }
-  
-    setDiscount(discountAmount);
-    setAppliedVoucher(voucher);
-    setIsVoucherOpen(false);
-    message.success(`Áp dụng ${voucher.code} thành công!`);
-  };
-
-
-  useEffect(() => {
-  if (id) dispatch(fetchProductById(id));
-
-  const fetchVouchers = async () => {
-    setIsVoucherLoading(true);
-    try {
-      const data = await getVouchersAPI();
-      setVouchers(data);
-      console.log('>>>', data.id);
-    } catch (err) {
-      console.error('Lỗi fetch vouchers:', err);
-    } finally {
-      setIsVoucherLoading(false);
-    }
-  };
-
-  fetchVouchers();
-  }, [dispatch, id]);
-  
-
-  useEffect(() => {
-    if (id) dispatch(fetchProductById(id));
-
-  const fetchVouchers = async () => {
-    setIsVoucherLoading(true);
-    try {
-      const data = await getVoucherByCodeAPI(voucherCode);
-      setVoucherCode(data);
-      console.log('>>>', data);
-    } catch (err) {
-      console.error('Lỗi fetch vouchers:', err);
-    } finally {
-      setIsVoucherLoading(false);
-    }
-  };
-
-  fetchVouchers();
-}, [dispatch, id]);
-
-  
-  const handlemodalVoucher = () => { 
-    setIsVoucherOpen(true)
-  }
 
   const { profile } = useSelector((state) => state.auth);
   const { currentProduct: product, isLoading, error } = useSelector((state) => state.products);
 
-  useEffect(() => {
-    if (id) dispatch(fetchProductById(id));
-  }, [dispatch, id]);
+  const [shipping, setShipping] = useState('standard');
+  const [payment, setPayment] = useState('cod');
+  const [quantity, setQuantity] = useState(1);
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [form] = Form.useForm();
+
+  const [isVoucherOpen, setIsVoucherOpen] = useState(false);
+  const [vouchers, setVouchers] = useState([]);
+  const [isVoucherLoading, setIsVoucherLoading] = useState(false);
+  
+  const [discount, setDiscount] = useState(0);
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const defaultAddress = {
     id: 'default',
@@ -150,29 +67,73 @@ function Payment() {
     isDefault: true,
   };
 
-  const selectedMethod = shippingMethods.find((m) => m.id === shipping);
-  const shippingFee = selectedMethod?.price || 0;
-  const selectedPayment = paymentMethods.find((m) => m.id === payment);
-
-  const handleAddAddress = () => {
-  setEditingAddress(null);
-  setIsModalOpen(true);
-  };
-
-  const handleEditAddress = (address) => {
-  setEditingAddress(address);
-  setIsModalOpen(true);
-  };
-  
-  const handleCloseModal = () => {
-  setIsModalOpen(false);
-  setEditingAddress(null);
-  };
-
   const [addressList, setAddressList] = useState([defaultAddress]);
   const [selectedAddress, setSelectedAddress] = useState(defaultAddress.id);
 
-   const handleSubmit = (values) => {
+  useEffect(() => {
+    if (id) dispatch(fetchProductById(id));
+
+    const fetchVouchers = async () => {
+      setIsVoucherLoading(true);
+      try {
+        const data = await getVouchersAPI();
+        setVouchers(data);
+      } catch (err) {
+        console.error('Lỗi fetch vouchers:', err);
+      } finally {
+        setIsVoucherLoading(false);
+      }
+    };
+
+    fetchVouchers();
+  }, [dispatch, id]);
+
+  const selectedMethod = shippingMethods.find((m) => m.id === shipping);
+  const shippingFee = selectedMethod?.price || 0;
+  const selectedPayment = paymentMethods.find((m) => m.id === payment);
+  const subtotal = (product?.price || 0) * quantity;
+  const finalTotal = subtotal + shippingFee - discount;
+
+  const handleApplyVoucher = (voucher) => {
+    if (subtotal < voucher.minOrder) {
+      message.error(`Đơn tối thiểu ${voucher.minOrder.toLocaleString('vi-VN')}đ!`);
+      return;
+    }
+
+    if (voucher.usageCount >= voucher.usageLimit) {
+      message.error('Mã đã hết lượt sử dụng!');
+      return;
+    }
+
+    let discountAmount = 0;
+    if (voucher.type === 'fixed') {
+      discountAmount = voucher.value;
+    } else {
+      discountAmount = Math.min((subtotal * voucher.value) / 100, voucher.maxDiscount);
+    }
+
+    setDiscount(discountAmount);
+    setAppliedVoucher(voucher);
+    setIsVoucherOpen(false);
+    message.success(`Áp dụng ${voucher.code} thành công!`);
+  };
+
+  const handleAddAddress = () => {
+    setEditingAddress(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditAddress = (address) => {
+    setEditingAddress(address);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingAddress(null);
+  };
+
+  const handleSubmitAddress = (values) => {
     if (editingAddress) {
       setAddressList(addressList.map((a) =>
         a.id === editingAddress.id ? { ...a, ...values } : a
@@ -190,24 +151,11 @@ function Payment() {
     handleCloseModal();
   };
 
-  if (error) return <p>Lỗi: {error}</p>;
-
-  if (isLoading || !product) {
-    return (
-      <AppLayout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-          <Spin size="large" />
-        </div>
-      </AppLayout>
-    );
-  }
-
   const handlePlaceOrder = async () => {
     try {
       setIsPlacingOrder(true);
+      const currentAddress = addressList.find((a) => a.id === selectedAddress);
 
-      const currentAddress = addressList.find(a => a.id === selectedAddress);
-      
       const orderData = {
         items: [{
           productId: product.id,
@@ -220,14 +168,13 @@ function Payment() {
         paymentMethod: selectedPayment?.title,
         shippingFee: shippingFee,
         discount: discount,
-        total: (product.price * quantity) + shippingFee - discount,
+        total: finalTotal,
         voucherCode: appliedVoucher ? appliedVoucher.code : null,
       };
 
       const newOrderId = await createOrderAPI(orderData);
-
       const finalOrderData = { ...orderData, orderId: newOrderId };
-      console.log('>>>', finalOrderData)
+
       message.success('Đặt hàng thành công!');
       navigate('/ordersuccess', { state: { orderData: finalOrderData } });
 
@@ -239,6 +186,17 @@ function Payment() {
     }
   };
 
+  if (error) return <p>Lỗi: {error}</p>;
+
+  if (isLoading || !product) {
+    return (
+      <AppLayout>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
+          <Spin size="large" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -332,7 +290,7 @@ function Payment() {
                     <span onClick={() => setQuantity(quantity + 1)} style={{ cursor: 'pointer', userSelect: 'none' }}>+</span>
                   </div>
                   <div style={{ fontWeight: 700, marginTop: 8 }}>
-                    {(product?.price * quantity)?.toLocaleString('vi-VN')}đ
+                    {subtotal.toLocaleString('vi-VN')}đ
                   </div>
                 </div>
               </div>
@@ -340,7 +298,7 @@ function Payment() {
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Tạm tính</Text>
-                  <Text>{(product?.price * quantity)?.toLocaleString('vi-VN')}đ</Text>
+                  <Text>{subtotal.toLocaleString('vi-VN')}đ</Text>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Phí vận chuyển</Text>
@@ -348,7 +306,9 @@ function Payment() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Giảm giá</Text>
-                  <Text>{discount.toLocaleString('vi-VN')}đ</Text>
+                  <Text style={{ color: discount > 0 ? '#52c41a' : '#111' }}>
+                    {discount > 0 ? `- ${discount.toLocaleString('vi-VN')}đ` : '- 0đ'}
+                  </Text>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Phương thức giao hàng</Text>
@@ -361,17 +321,21 @@ function Payment() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Title level={5} style={{ margin: 0 }}>Tổng cộng</Title>
                 <span style={{ fontSize: 22, fontWeight: 700, color: '#001529' }}>
-                  {((product?.price * quantity) + shippingFee - discount)?.toLocaleString('vi-VN')}đ
+                  {finalTotal.toLocaleString('vi-VN')}đ
                 </span>
               </div>
 
               <div
-                onClick={ handlemodalVoucher}
+                onClick={() => setIsVoucherOpen(true)}
                 style={{ marginTop: 16, padding: 12, background: '#f0f5ff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
                 <TagOutlined style={{ color: '#001529', fontSize: 18 }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, color: '#001529', fontSize: 13 }}>Bạn có mã giảm giá?</div>
-                  <div style={{ color: '#888', fontSize: 12 }}>Nhập mã giảm giá để được hưởng ưu đãi tốt nhất.</div>
+                  <div style={{ fontWeight: 600, color: '#001529', fontSize: 13 }}>
+                    {appliedVoucher ? `Đã áp dụng: ${appliedVoucher.code}` : 'Bạn có mã giảm giá?'}
+                  </div>
+                  <div style={{ color: '#888', fontSize: 12 }}>
+                    {appliedVoucher ? `Giảm ${discount.toLocaleString('vi-VN')}đ` : 'Nhập mã giảm giá để được hưởng ưu đãi tốt nhất.'}
+                  </div>
                 </div>
                 <ArrowRightOutlined style={{ color: '#999' }} />
               </div>
@@ -387,31 +351,22 @@ function Payment() {
           </Col>
         </Row>
 
-        <Modal title="Thêm địa chỉ mới" open={isModalOpen} onCancel={handleCloseModal} footer={null} width={500} centered>
-          <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 16 }}>
-            <Form.Item name="name" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
-              <Input size="large" placeholder="Nguyễn Văn A" />
-            </Form.Item>
-
-            <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập SĐT!' }, { pattern: /^[0-9]{10,11}$/, message: 'SĐT không hợp lệ!' }]}>
-              <Input size="large" placeholder="0912345678" />
-            </Form.Item>
-
-            <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}>
-              <Input.TextArea rows={3} size="large" placeholder="Số nhà, đường, quận, thành phố" />
-            </Form.Item>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <Button size="large" onClick={handleCloseModal}>Hủy</Button>
-              <Button type="primary" size="large" htmlType="submit" style={{ background: '#001529', borderColor: '#001529' }}>
-                Lưu địa chỉ
-              </Button>
-            </div>
-          </Form>
-        </Modal>
-
-         <Modal title="Chỉnh sửa địa chỉ" open={editingAddress} onCancel={handleCloseModal} footer={null} width={500} centered>
-          <Form form={form} layout="vertical" onFinish={handleSubmit} style={{ marginTop: 16 }}>
+        <Modal
+          title={editingAddress ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
+          open={isModalOpen}
+          onCancel={handleCloseModal}
+          footer={null}
+          width={500}
+          centered
+          destroyOnClose
+        >
+          <Form 
+            form={form} 
+            layout="vertical" 
+            onFinish={handleSubmitAddress} 
+            initialValues={editingAddress || { name: '', phone: '', address: '' }} 
+            style={{ marginTop: 16 }}
+          >
             <Form.Item name="name" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
               <Input size="large" placeholder="Nguyễn Văn A" />
             </Form.Item>
@@ -436,8 +391,9 @@ function Payment() {
         <VoucherModal
           open={isVoucherOpen}
           onClose={() => setIsVoucherOpen(false)}
-          onApply={ handleApplyVoucher }
+          onApply={handleApplyVoucher}
           vouchers={vouchers}
+          isLoading={isVoucherLoading}
         />
       </main>
     </AppLayout>
