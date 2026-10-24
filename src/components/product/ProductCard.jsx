@@ -3,20 +3,36 @@ import { Button, Card, Tag } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../../features/cartSlice/index'
 
 function ProductCard({ product }) {
     const { id, name, price, image, brand } = product;
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
   const handleClickCard = () => {
     navigate(`/productdetail/${id}`);
   };
 
+  const ClickshoppingCard = () => {
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      brand: product.brand,
+      quantity: 1
+    };
+      navigate(`/addtocart/${id}`);
+      dispatch(addToCart(cartItem)); 
+      console.log('Product add to cart', cartItem)
+    }
+
 
   return (
     <Card
       hoverable
-       onClick={handleClickCard}
       style={{ width: '100%', borderRadius: 12, overflow: 'hidden' }}
       styles={{ body: { padding: 16 } }}
       cover={
@@ -57,6 +73,7 @@ function ProductCard({ product }) {
 
           <div style={{display: 'flex'}} className='action-btn'>
         <Button
+        onClick={ClickshoppingCard}
         type="text"
         icon={<ShoppingCartOutlined />}
         block

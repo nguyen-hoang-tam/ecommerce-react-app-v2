@@ -12,6 +12,7 @@ function AppLayout({ children }) {
         <Menu theme="dark" mode="horizontal" style={{ flex: 1, borderBottom: 'none' }}>
           <Menu.Item key="home"><Link to="/home" style={{ color: '#fff' }}>Home</Link></Menu.Item>
           <Menu.Item key="login"><Link to="/login" style={{ color: '#fff' }}>Login</Link></Menu.Item>
+          <Menu.Item key="login"><Link to="/shoppingcart" style={{ color: '#fff' }}>Shopping Cart</Link></Menu.Item>
         </Menu>
       </Header>
       <Content style={{ padding: '24px 50px' }}>{children}</Content>

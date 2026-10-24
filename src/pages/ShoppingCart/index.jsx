@@ -56,6 +56,7 @@ function Payment() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [form] = Form.useForm();
 
+
   const { profile } = useSelector((state) => state.auth);
     const { currentProduct: product, isLoading } = useSelector((state) => state.products);
 
@@ -133,6 +134,12 @@ function Payment() {
     setEditingAddress(null);
   };
 
+   const handleremoveFromCart = () => { 
+    message.success('xoá thành công')
+    dispatch(removeFromCart(product.id)); 
+    console.log('Product add to cart', product.id)
+  }
+
   const handleSubmitAddress = (values) => {
     if (editingAddress) {
       setAddressList(addressList.map((a) => a.id === editingAddress.id ? { ...a, ...values } : a));
@@ -182,6 +189,24 @@ function Payment() {
     );
   }
 
+  const handleIncrease = (item) => {                                                                                                                                                                                                                                                                                                                                                                                                                    
+    dispatch(updateQuantity({                                                                                                                                   
+      id: item.id,                                                                                                                                           
+      quantity: item.quantity + 1                                                                                                                                            
+    }));     
+    console.log(item)                                                                                                                                                       
+  };                                                                                                                                                                
+  
+  const handleDecrease = (item) => {                                                                                                                                                                                                                                                       
+    if (item.quantity > 1) {                                                                                                                                                                                                                                                                                                              
+      dispatch(updateQuantity({                                                                                                                                 
+        id: item.id,                                                                                                                                         
+        quantity: item.quantity - 1                                                                                                                                       
+      }));                                                                                                                                                        
+    }                                                                                                                                                               
+  };         
+
+
   return (
     <AppLayout>
       <main style={{ padding: '24px 50px', background: '#f7f8fa', minHeight: 'calc(100vh - 54px)' }}>
@@ -211,13 +236,15 @@ function Payment() {
               <Text strong>{item.price.toLocaleString('vi-VN')}đ</Text>
                   <div style={{ margin: 'auto',alignItems: 'center',textAlign: 'center', width: 'fit-Content' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e5e5e5', borderRadius: 6, padding: '2px 8px' }}>
-                    <span onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ cursor: 'pointer', userSelect: 'none' }}>−</span>
-                    <span style={{ minWidth: 20, textAlign: 'center', fontSize: 13 }}>{quantity}</span>
-                    <span onClick={() => setQuantity(quantity + 1)} style={{ cursor: 'pointer', userSelect: 'none' }}>+</span>
-                  </div>
+                    <span onClick={() => handleDecrease(item)} style={{ cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}>−</span>                                           
+                    <span style={{ minWidth: 20, textAlign: 'center', fontSize: 13 }}>{item.quantity}</span>                                                                          
+                    <span onClick={() => handleIncrease(item)} style={{ cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}>+</span>                                                                                                                                                                                               
+                </div>
                 </div>
               <Text strong style={{ textAlign: 'right' }}>{(item.price * item.quantity).toLocaleString('vi-VN')}đ</Text>
-              <Button type="text" danger icon={<DeleteOutlined />} />
+              <Button
+              onClick={handleremoveFromCart}
+              type="text" danger icon={<DeleteOutlined />} />
             </div>
           ))}
         </Card>
@@ -243,10 +270,12 @@ function Payment() {
               </Button>
             </Card>
 
-            <Card style={{ borderRadius: 10, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
+           <Card style={{ borderRadius: 10, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
               <div style={{ marginBottom: 16 }}>
                 <Title level={4} style={{ margin: 0, fontSize: 16 }}>Phương thức giao hàng</Title>
+                <Text type="secondary" style={{ fontSize: 12 }}>Chọn phương thức giao hàng phù hợp với bạn.</Text>
               </div>
+
               <Row gutter={[10, 10]}>
                 {shippingMethods.map((item) => (
                   <Col xs={24} sm={12} md={8} key={item.id}>
@@ -255,7 +284,6 @@ function Payment() {
                 ))}
               </Row>
             </Card>
-
             <Card style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
               <div style={{ marginBottom: 8 }}>
                 <Title level={4} style={{ margin: 0 }}>Phương thức thanh toán</Title>
@@ -277,7 +305,7 @@ function Payment() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Tạm tính</Text>
-                  <Text>{subtotal.toLocaleString('vi-VN')}đ</Text>
+                  <Text>{(subtotal).toLocaleString('vi-VN')}đ</Text>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Phí vận chuyển</Text>
@@ -287,6 +315,12 @@ function Payment() {
                   <Text type="secondary">Giảm giá</Text>
                   <Text style={{ color: discount > 0 ? '#52c41a' : '#111' }}>
                     {discount > 0 ? `- ${discount.toLocaleString('vi-VN')}đ` : '- 0đ'}
+                  </Text>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Text type="secondary"> Phương thức thanh toán</Text>
+                  <Text style={{ color: discount > 0 ? '#000000' : '#111' }}>
+                   {selectedPayment.title}
                   </Text>
                 </div>
               </div>

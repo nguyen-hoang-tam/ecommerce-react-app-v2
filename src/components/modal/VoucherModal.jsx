@@ -17,7 +17,7 @@ function VoucherModal({ open, onClose, onApply, vouchers = [] }) {
     const trimmed = code.trim().toUpperCase();
 
     if (!trimmed) {
-      message.error('Vui lòng nhập mã giảm giá!');
+      message.error('Vui long nhập mã giảm giá!');
       return;
     }
 

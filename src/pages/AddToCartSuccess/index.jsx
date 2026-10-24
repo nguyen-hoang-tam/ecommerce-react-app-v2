@@ -16,6 +16,7 @@ function AddToCartSuccess() {
     (state) => state.products
   );
 
+
   useEffect(() => {
     if (id) dispatch(fetchProductById(id));
     dispatch(fetchProducts());
