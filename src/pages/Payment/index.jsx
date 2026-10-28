@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { getUserProfile } from '../../features/auth/authAPI';
 import {
   Card, Row, Col, Typography, Button, Divider, Breadcrumb,
   Spin, Form, Modal, Input, message
@@ -36,6 +37,7 @@ export const paymentMethods = [
 ];
 
 function Payment() {
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id } = useParams();
@@ -66,7 +68,7 @@ function Payment() {
     address: profile?.address || 'Chưa có địa chỉ',
     isDefault: true,
   };
-
+  
   const [addressList, setAddressList] = useState([defaultAddress]);
   const [selectedAddress, setSelectedAddress] = useState(defaultAddress.id);
 
@@ -179,7 +181,7 @@ function Payment() {
       navigate('/ordersuccess', { state: { orderData: finalOrderData } });
 
     } catch (error) {
-      message.error('Có lỗi xảy ra khi đặt hàng!');
+      message.error('Cần login khi đặt hàng!');
       console.error(error);
     } finally {
       setIsPlacingOrder(false);

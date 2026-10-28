@@ -20,17 +20,19 @@ function Signin() {
       values.password,
     );
 
-      const profile = await getUserProfile(user.uid);
-      console.log (profile)
+    const profile = await getUserProfile(user.uid);
 
     dispatch(authSuccess({ user, token }));
     dispatch(setProfile(profile));
+    console.log(profile)
 
     message.success('Đăng nhập thành công!');
-    navigate('/home');
+
+    const redirectPath = location.state?.from?.pathname || '/home';
+      navigate(redirectPath, { replace: true }); 
   } catch (error) {
-    dispatch(authFailure(error.message));
-    message.error(error.message || 'Đăng nhập thất bại!');
+      dispatch(authFailure(error.message));
+      message.error(error.message || 'Đăng nhập thất bại!');
   }
   }; 
 

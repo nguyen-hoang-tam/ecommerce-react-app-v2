@@ -38,7 +38,6 @@ const paymentMethods = [
 
 function Payment() {
 
-  const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();

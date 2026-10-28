@@ -1,5 +1,5 @@
 
-import { Button, Card, Tag } from 'antd';
+import { Button, Card } from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';

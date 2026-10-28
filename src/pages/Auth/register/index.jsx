@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button, Form, Input, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
