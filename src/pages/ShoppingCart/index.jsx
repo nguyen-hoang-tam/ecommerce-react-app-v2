@@ -57,7 +57,7 @@ function Payment() {
 
 
   const { profile } = useSelector((state) => state.auth);
-    const { currentProduct: product, isLoading } = useSelector((state) => state.products);
+  const { currentProduct: product, isLoading } = useSelector((state) => state.products);
 
   const defaultAddress = {
     id: 'default',
@@ -171,7 +171,7 @@ function Payment() {
       message.success('Đặt hàng thành công!');
       navigate('/ordersuccess', { state: { orderData: finalOrderData } });
     } catch (error) {
-      message.error('Có lỗi xảy ra khi đặt hàng!');
+      message.error('Cần login khi đặt hàng!');
       console.error(error);
     } finally {
       setIsPlacingOrder(false);
