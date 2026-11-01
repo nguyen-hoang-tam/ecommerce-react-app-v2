@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { ArrowRightOutlined } from '@ant-design/icons';
@@ -10,8 +12,20 @@ import { RelatedProductCard } from '../../components/product';
 import { fetchProducts } from '@/features/product';
 
 function Homepage() {
-  const dispatch = useDispatch();
+  
   const { items, isLoading, error } = useSelector((state) => state.products);
+
+  const [searchParams] = useSearchParams();
+  const keywordFromUrl = searchParams.get('q') || '';
+
+  const filteredProducts = useMemo(() => {
+    if (!keywordFromUrl) return items;
+        return items.filter((product) => 
+      product.name.toLowerCase().includes(keywordFromUrl.toLowerCase())
+    );
+  }, [items, keywordFromUrl]);
+  
+  const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -52,8 +66,13 @@ function Homepage() {
               Xem tất cả <ArrowRightOutlined />
             </Link>
           </div>
-          <Grid items={featuredProducts} loading={isLoading} renderItem={(product) => <ProductCard product={product} />} />
-
+          <div style={{ width: '100%' }}>
+            <Grid
+              items={keywordFromUrl ? filteredProducts : featuredProducts} 
+              loading={isLoading}
+              renderItem={(product) => <ProductCard product={product} />}
+            />
+          </div>
           <section style={{ marginTop: 56 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <h2 style={{ fontSize: 24, fontWeight: 600, margin: 0 }}>Sản phẩm đề xuất</h2>
