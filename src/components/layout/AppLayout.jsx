@@ -1,8 +1,3 @@
-<<<<<<< Updated upstream
-import { Layout, Menu } from 'antd';
-import { Link } from 'react-router-dom';
-
-=======
 import { useState } from 'react';
 import { Layout, Menu, Button, Space, message, Input } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
@@ -14,25 +9,12 @@ import { deleteUser } from 'firebase/auth';
 import { logoutAPI } from '../../features/auth/authAPI';
 import { authLogout } from '../../features/auth/authSlice';
 import { clearCart } from '../../features/cartSlice';
-import ConfirmModal from '../modal/ConfirmModal';
 import { auth, db } from '@/lib/firebase';
->>>>>>> Stashed changes
 
 const { Header, Footer, Content } = Layout;
 const { Search } = Input;
 
 function AppLayout({ children }) {
-<<<<<<< Updated upstream
-  return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px', background: '#001529' }}>
-        <Link to="/home" style={{ color: '#fff', fontSize: 18, fontWeight: 'bold', marginRight: 48, textDecoration: 'none' }}>MyApp</Link>
-        <Menu theme="dark" mode="horizontal" style={{ flex: 1, borderBottom: 'none' }}>
-          <Menu.Item key="home"><Link to="/home" style={{ color: '#fff' }}>Home</Link></Menu.Item>
-          <Menu.Item key="login"><Link to="/login" style={{ color: '#fff' }}>Login</Link></Menu.Item>
-          <Menu.Item key="login"><Link to="/shoppingcart" style={{ color: '#fff' }}>Shopping Cart</Link></Menu.Item>
-        </Menu>
-=======
   const { profile } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -120,7 +102,6 @@ function AppLayout({ children }) {
             <Link to="/login"><Button type="primary" icon={<UserOutlined />}>Login</Button></Link>
           )}
         </div>
->>>>>>> Stashed changes
       </Header>
       <Content style={{ padding: '24px 50px' }}>{children}</Content>
       <Footer style={{ textAlign: 'center' }}>MyApp ©2026 Created with Ant Design</Footer>
