@@ -1,33 +1,38 @@
-import { doc, deleteDoc } from 'firebase/firestore'; 
-import { deleteUser } from 'firebase/auth'; 
-import { Input } from 'antd'; 
-const { Search } = Input; 
 import { useState } from 'react';
-import { Layout, Menu, Button, Space, message,} from 'antd';
+import { Layout, Menu, Button, Space, message, Input } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { UserOutlined, LogoutOutlined, ShoppingCartOutlined, HomeOutlined, DeleteOutlined } from '@ant-design/icons';
-import { SearchOutlined } from '@ant-design/icons';
+import { doc, deleteDoc } from 'firebase/firestore'; 
+import { deleteUser } from 'firebase/auth'; 
+import ConfirmModal from '../modal/ConfirmModal'
 import { logoutAPI } from '../../features/auth/authAPI';
 import { authLogout } from '../../features/auth/authSlice';
 import { clearCart } from '../../features/cartSlice';
-import ConfirmModal from '../modal/ConfirmModal';
 import { auth, db } from '@/lib/firebase';
 
 const { Header, Footer, Content } = Layout;
+const { Search } = Input;
 
 function AppLayout({ children }) {
-
   const { profile } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const [searchTerm, setSearchTerm] = useState('');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSearchUI  = () => {
-    console.log ('>>>')
-  }
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    
+    if (value.trim()) {
+      navigate(`/home?q=${encodeURIComponent(value.trim())}`);
+    } else {
+      navigate('/home'); 
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -69,6 +74,7 @@ function AppLayout({ children }) {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px', background: '#001529' }}>
+        
         <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
           <Link to="/home" style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', marginRight: 40, textDecoration: 'none' }}>MyApp</Link>
           <Menu theme="dark" mode="horizontal" style={{ flex: 1, borderBottom: 'none', minWidth: 0 }} selectedKeys={[]}>
@@ -76,15 +82,16 @@ function AppLayout({ children }) {
             <Menu.Item key="cart" icon={<ShoppingCartOutlined />}><Link to="/shoppingcart">Shopping Cart</Link></Menu.Item>
           </Menu>
         </div>
-                     <div style={{ maxWidth: 600, margin: '0 auto', marginRight: '12px' }}>
-        <Search
-          placeholder="Tìm kiếm sản phẩm (UI)..."
-          allowClear
-          enterButton={<SearchOutlined />} 
-          size="medium" 
-          onSearch={handleSearchUI}
-        />
-      </div>
+
+        <div style={{ maxWidth: 600, margin: '0 auto', marginRight: '12px' }}>
+          <Search
+            onChange={handleInputChange}
+            placeholder="Tìm kiếm sản phẩm (UI)..."
+            size="medium" 
+            value={searchTerm}
+          />
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {profile ? (
             <Space size="middle">
