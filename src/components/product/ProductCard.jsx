@@ -32,6 +32,7 @@ function ProductCard({ product }) {
 
   return (
     <Card
+      onClick={handleClickCard}
       hoverable
       style={{ width: '100%', borderRadius: 12, overflow: 'hidden' }}
       styles={{ body: { padding: 16 } }}

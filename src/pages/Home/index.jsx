@@ -49,7 +49,7 @@ function Homepage() {
             </p>
             <Link
               to="/shop"
-              style={{ background: '#101010', padding: '12px 20px', color: '#fff', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textDecoration: 'none', width: 182 }}
+              style={{ background: '#101010', padding: '12px 20px', borderRadius: 10, color: '#fff', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, textDecoration: 'none', width: 182 }}
             >
               Shop Now <ArrowRightOutlined />
             </Link>

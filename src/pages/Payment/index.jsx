@@ -154,38 +154,49 @@ function Payment() {
   };
 
   const handlePlaceOrder = async () => {
-    try {
-      setIsPlacingOrder(true);
-      const currentAddress = addressList.find((a) => a.id === selectedAddress);
+  if (!profile) {
+    message.warning('Vui lòng đăng nhập để đặt hàng!');
+    return;
+  }
 
-      const orderData = {
-        items: [{
-          productId: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: quantity,
-          image: product.image,
-        }],
-        shippingAddress: currentAddress,
-        paymentMethod: selectedPayment?.title,
-        shippingFee: shippingFee,
-        discount: discount,
-        total: finalTotal,
-        voucherCode: appliedVoucher ? appliedVoucher.code : null,
-      };
+  const currentAddress = addressList.find((a) => a.id === selectedAddress);
 
-      const newOrderId = await createOrderAPI(orderData);
-      const finalOrderData = { ...orderData, orderId: newOrderId };
+  if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
+  message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
+  return;
+}
 
-      message.success('Đặt hàng thành công!');
-      navigate('/ordersuccess', { state: { orderData: finalOrderData } });
+  try {
+    setIsPlacingOrder(true);
 
-    } catch (error) {
-      message.error('Cần login khi đặt hàng!');
-      console.error(error);
-    } finally {
-      setIsPlacingOrder(false);
-    }
+    const orderData = {
+      items: [{
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: quantity,
+        image: product.image,
+      }],
+      shippingAddress: currentAddress,
+      paymentMethod: selectedPayment?.title,
+      shippingFee: shippingFee,
+      discount: discount,
+      total: finalTotal,
+      voucherCode: appliedVoucher ? appliedVoucher.code : null,
+    };
+
+    const newOrderId = await createOrderAPI(orderData);
+    const finalOrderData = { ...orderData, orderId: newOrderId };
+
+    message.success('Đặt hàng thành công!');
+    navigate('/ordersuccess', { state: { orderData: finalOrderData } });
+
+  } catch (error) {
+    console.error(error);
+    message.error(error.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
+  } finally {
+    setIsPlacingOrder(false);
+  }
   };
 
   if (error) return <p>Lỗi: {error}</p>;
