@@ -81,7 +81,7 @@ function AddToCartSuccess() {
                     type="primary" 
                     size="large" 
                     icon={<ArrowRightOutlined />} 
-                    iconPosition="end" 
+                    iconPlacement="end"
                     style={{ minWidth: 215, height: 44, borderRadius: 8 }}
                   >
                     Tiếp tục mua sắm

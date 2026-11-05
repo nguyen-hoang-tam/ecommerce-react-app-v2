@@ -27,7 +27,7 @@ const ConfirmModal = ({
       onOk={onConfirm}
       onCancel={onCancel}
       closable={!loading}
-      maskClosable={!loading}
+      mask={{ closable: !loading }}
       cancelButtonProps={{ disabled: loading }}
     >
       {content}

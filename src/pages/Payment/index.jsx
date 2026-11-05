@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getUserProfile } from '../../features/auth/authAPI';
 import {
   Card, Row, Col, Typography, Button, Divider, Breadcrumb,
   Spin, Form, Modal, Input, message
@@ -17,6 +16,9 @@ import AppLayout from '../../components/layout/AppLayout';
 import OptionCard from '../../components/card/OptionCard';
 import OptionAddress from '../../components/card/OptionAddress';
 import VoucherModal from '../../components/modal/VoucherModal';
+import AddBankModal from '../../components/modal/AddBankModal';
+import EWalletPaymentModal from '../../components/modal/EWalletPaymentModal';
+import CardPaymentModal from '../../components/modal/CardPaymentModal';
 import { fetchProductById } from '@/features/product/productSlice';
 import { getVouchersAPI } from '@/features/auth/voucherAPI';
 import { createOrderAPI } from '@/features/order/orderAPI';
@@ -48,6 +50,10 @@ function Payment() {
   const [shipping, setShipping] = useState('standard');
   const [payment, setPayment] = useState('cod');
   const [quantity, setQuantity] = useState(1);
+
+  const [isModalbankOpen, setIsModalbankOpen] = useState(false);
+  const [isCardPaymentModal, setIsCardPaymentModal] = useState(false);
+  const [isEWalletPaymentModal, setIsEWalletPaymentModal] = useState(false);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -62,12 +68,12 @@ function Payment() {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const defaultAddress = {
-    id: 'default',
-    name: profile?.fullname || 'Chưa có tên',
-    phone: profile?.phone || 'Chưa có SĐT',
-    address: profile?.address || 'Chưa có địa chỉ',
-    isDefault: true,
-  };
+  id: 'default',
+  name: profile?.fullname ?? null,      
+  phone: profile?.phone ?? null,
+  address: profile?.address ?? null,
+  isDefault: true,
+};
   
   const [addressList, setAddressList] = useState([defaultAddress]);
   const [selectedAddress, setSelectedAddress] = useState(defaultAddress.id);
@@ -133,6 +139,10 @@ function Payment() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingAddress(null);
+    setIsCardPaymentModal(false);
+    setIsEWalletPaymentModal(false);
+
+
   };
 
   const handleSubmitAddress = (values) => {
@@ -153,51 +163,73 @@ function Payment() {
     handleCloseModal();
   };
 
-  const handlePlaceOrder = async () => {
-  if (!profile) {
-    message.warning('Vui lòng đăng nhập để đặt hàng!');
-    return;
-  }
-
-  const currentAddress = addressList.find((a) => a.id === selectedAddress);
-
-  if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
-  message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
-  return;
-}
-
+  const executeOrder = async () => {
   try {
     setIsPlacingOrder(true);
+
+    const currentAddress = addressList.find((a) => a.id === selectedAddress);
+
+    if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
+      message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
+      return;
+    }
 
     const orderData = {
       items: [{
         productId: product.id,
         name: product.name,
         price: product.price,
-        quantity: quantity,
+        quantity,
         image: product.image,
       }],
       shippingAddress: currentAddress,
       paymentMethod: selectedPayment?.title,
-      shippingFee: shippingFee,
-      discount: discount,
+      shippingFee,
+      discount,
       total: finalTotal,
       voucherCode: appliedVoucher ? appliedVoucher.code : null,
     };
 
     const newOrderId = await createOrderAPI(orderData);
-    const finalOrderData = { ...orderData, orderId: newOrderId };
+    const finalOrderData = { ...orderData, orderId: newOrderId };  
 
     message.success('Đặt hàng thành công!');
     navigate('/ordersuccess', { state: { orderData: finalOrderData } });
-
-  } catch (error) {
-    console.error(error);
-    message.error(error.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
+  } catch (err) {
+    console.error(err);
+    message.error(err?.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
   } finally {
     setIsPlacingOrder(false);
   }
   };
+
+  const handlePlaceOrder = () => {
+  if (!profile) {
+    message.warning('Vui lòng đăng nhập để đặt hàng!');
+    return;
+  }
+
+  const currentAddress = addressList.find((a) => a.id === selectedAddress);
+  if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
+    message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
+    return;
+  }
+
+  if (payment === 'bank') {
+    setIsModalbankOpen(true); 
+    return; 
+  } 
+  else if (payment === 'credit') {
+    setIsCardPaymentModal(true);
+    return;
+  } 
+    else if (payment === 'wallet') {
+    setIsEWalletPaymentModal(true);
+    return;
+  } 
+
+  executeOrder();
+};
 
   if (error) return <p>Lỗi: {error}</p>;
 
@@ -276,7 +308,7 @@ function Payment() {
                 Quay lại giỏ hàng
               </Link>
 
-              <Button type="primary" size="large" style={{ background: '#001529', borderColor: '#001529', padding: '0 40px' }} icon={<ArrowRightOutlined />} iconPosition="end" onClick={handlePlaceOrder} loading={isPlacingOrder}>
+              <Button type="primary" size="large" style={{ background: '#001529', borderColor: '#001529', padding: '0 40px' }} icon={<ArrowRightOutlined />} iconPlacement="end" onClick={handlePlaceOrder} loading={isPlacingOrder}>
                 Đặt hàng
               </Button>
             </div>
@@ -356,7 +388,7 @@ function Payment() {
               <div style={{ marginTop: 12, padding: 12, background: '#f5f9ff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
                 <SafetyCertificateOutlined style={{ color: '#1677ff', fontSize: 20 }} />
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>Thanh toán an toàn</div>
+                  <div style={{ fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>Thanh toán an toàn</div>
                   <div style={{ color: '#888', fontSize: 12 }}>Chúng tôi cam kết bảo mật thông tin thanh toán của bạn.</div>
                 </div>
               </div>
@@ -371,7 +403,7 @@ function Payment() {
           footer={null}
           width={500}
           centered
-          destroyOnClose
+          destroyOnHidden
         >
           <Form 
             form={form} 
@@ -407,6 +439,36 @@ function Payment() {
           onApply={handleApplyVoucher}
           vouchers={vouchers}
           isLoading={isVoucherLoading}
+        />
+
+        <AddBankModal
+          amount={finalTotal}
+          open={isModalbankOpen}
+          onCancel={() => setIsModalbankOpen(false)}
+          onConfirm={() => {
+            setIsModalbankOpen(false);   
+            executeOrder();              
+          }}
+        />
+
+         <CardPaymentModal
+          amount={finalTotal}
+          open={isCardPaymentModal}
+          onCancel={() => setIsCardPaymentModal(false)}
+          onConfirm={() => {
+            setIsCardPaymentModal(false);   
+            executeOrder();              
+          }}
+        />
+
+        <EWalletPaymentModal
+          amount={finalTotal}
+          open={isEWalletPaymentModal}
+          onCancel={() => setIsEWalletPaymentModal(false)}
+          onConfirm={() => {
+            setIsEWalletPaymentModal(false);   
+            executeOrder();              
+          }}
         />
       </main>
     </AppLayout>

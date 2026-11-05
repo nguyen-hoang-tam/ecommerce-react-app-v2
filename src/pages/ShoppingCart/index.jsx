@@ -171,7 +171,7 @@ function Payment() {
       message.success('Đặt hàng thành công!');
       navigate('/ordersuccess', { state: { orderData: finalOrderData } });
     } catch (error) {
-      message.error('Cần login khi đặt hàng!');
+      message.warning('Vui lòng đăng nhập để đặt hàng!');
       console.error(error);
     } finally {
       setIsPlacingOrder(false);
