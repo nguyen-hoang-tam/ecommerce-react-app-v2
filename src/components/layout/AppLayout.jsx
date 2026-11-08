@@ -95,8 +95,8 @@ function AppLayout({ children }) {
         <div style={{ display: 'flex', alignItems: 'center' }}>
           {profile ? (
             <Space size="middle">
-              <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>Logout</Button>
-              <Button danger icon={<DeleteOutlined />} onClick={() => setOpen(true)}>Xóa tài khoản</Button>
+              <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}></Button>
+              <Button danger icon={<DeleteOutlined />} onClick={() => setOpen(true)}></Button>
             </Space>
           ) : (
             <Link to="/login"><Button type="primary" icon={<UserOutlined />}>Login</Button></Link>

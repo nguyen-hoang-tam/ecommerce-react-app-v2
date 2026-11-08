@@ -72,33 +72,34 @@ function ProductCard({ product }) {
         </h3>
       </div>
 
-          <div style={{display: 'flex'}} className='action-btn'>
-        <Button
-        onClick={ClickshoppingCard}
-        type="text"
-        icon={<ShoppingCartOutlined />}
-        block
-        size="large"
-      >
-        Thêm vào giỏ
-          </Button>
-          
-        <Button
-        onClick={handleClickCard}
-        type="primary"
-        block
-        size="large"
-          style={{
-          background: '#101010',
-          color: '#fff',
-          fontWeight: '200'
-          
-          }}
-        >
-        Mua ngay
-        </Button>
-      </div>
-    </Card>
+  <div style={{ display: 'flex',flex: 1, gap: 8 }} className='action-btn'>
+   <Button
+    onClick={ClickshoppingCard}
+    type="icon"
+    icon={<ShoppingCartOutlined />}
+    size="large"
+    style={{
+      background: '#ffffff',
+    }}
+  >
+   </Button>
+      
+  <Button
+    onClick={handleClickCard}
+    type="primary"
+    size="large"
+    style={{
+      flex: 1,
+      background: '#101010',
+      color: '#fff',
+      fontWeight: '200',
+      padding: '0 4px'
+    }}
+  >
+    Mua ngay
+  </Button>
+</div>
+  </Card>
   );
 }
 

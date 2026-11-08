@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Card, Row, Col, Typography, Button, Divider, Breadcrumb,
-  Spin, Form, Modal, Input, message, Image, InputNumber
+  Spin, message, Image
 } from 'antd';
 import {
-  ArrowLeftOutlined, ArrowRightOutlined, PlusOutlined,
+  ArrowLeftOutlined, ArrowRightOutlined,
   CarOutlined, ThunderboltOutlined, ShopOutlined,
-  CreditCardOutlined, BankOutlined, WalletOutlined, TagOutlined, DeleteOutlined
+  CreditCardOutlined, BankOutlined, WalletOutlined,
+  TagOutlined, DeleteOutlined
 } from '@ant-design/icons';
 
 import AppLayout from '../../components/layout/AppLayout';
+import AddressSection from '../../components/address/AddressSection';
 import OptionCard from '../../components/card/OptionCard';
-import OptionAddress from '../../components/card/OptionAddress';
 import VoucherModal from '../../components/modal/VoucherModal';
-import { fetchProductById } from '@/features/product/productSlice';
+import AddBankModal from '../../components/modal/AddBankModal';
+import EWalletPaymentModal from '../../components/modal/EWalletPaymentModal';
+import CardPaymentModal from '../../components/modal/CardPaymentModal';
 import { getVouchersAPI } from '@/features/auth/voucherAPI';
 import { createOrderAPI } from '@/features/order/orderAPI';
-import { removeFromCart, updateQuantity } from '../../features/cartSlice/index'
+import { removeFromCart, updateQuantity } from '../../features/cartSlice/index';
+import { setAddressList } from '@/features/address/addressSlice';
 
 const { Title, Text } = Typography;
 
@@ -35,29 +39,27 @@ const paymentMethods = [
   { id: 'wallet', icon: <WalletOutlined />, title: 'Ví điện tử', desc: '(Momo, ZaloPay, VNPay)' },
 ];
 
-
 function Payment() {
-
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { id } = useParams();
 
   const cartItems = useSelector((state) => state.cart.items);
+  const { profile } = useSelector((state) => state.auth);
+  const { list: addressList } = useSelector((state) => state.address);
+  const { isLoading } = useSelector((state) => state.products);
+
+  const [isModalbankOpen, setIsModalbankOpen] = useState(false);
+  const [isCardPaymentModal, setIsCardPaymentModal] = useState(false);
+  const [isEWalletPaymentModal, setIsEWalletPaymentModal] = useState(false);
+
   const [shipping, setShipping] = useState('standard');
   const [payment, setPayment] = useState('cod');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(null);
   const [isVoucherOpen, setIsVoucherOpen] = useState(false);
   const [vouchers, setVouchers] = useState([]);
   const [isVoucherLoading, setIsVoucherLoading] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-  const [form] = Form.useForm();
-
-
-  const { profile } = useSelector((state) => state.auth);
-  const { currentProduct: product, isLoading } = useSelector((state) => state.products);
 
   const defaultAddress = {
     id: 'default',
@@ -67,12 +69,16 @@ function Payment() {
     isDefault: true,
   };
 
-  const [addressList, setAddressList] = useState([defaultAddress]);
   const [selectedAddress, setSelectedAddress] = useState(defaultAddress.id);
 
   useEffect(() => {
-    if (id) dispatch(fetchProductById(id));
+    if (profile && addressList.length === 0) {
+      dispatch(setAddressList([defaultAddress]));
+      setSelectedAddress('default');
+    }
+  }, [profile, addressList.length, dispatch]);
 
+  useEffect(() => {
     const fetchVouchers = async () => {
       setIsVoucherLoading(true);
       try {
@@ -84,9 +90,8 @@ function Payment() {
         setIsVoucherLoading(false);
       }
     };
-
     fetchVouchers();
-  }, [dispatch, id]);
+  }, []);
 
   const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
   const selectedMethod = shippingMethods.find((m) => m.id === shipping);
@@ -99,7 +104,6 @@ function Payment() {
       message.error(`Đơn tối thiểu ${voucher.minOrder.toLocaleString('vi-VN')}đ!`);
       return;
     }
-
     if (voucher.usageCount >= voucher.usageLimit) {
       message.error('Mã đã hết lượt sử dụng!');
       return;
@@ -118,49 +122,33 @@ function Payment() {
     message.success(`Áp dụng ${voucher.code} thành công!`);
   };
 
-  const handleAddAddress = () => {
-    setEditingAddress(null);
-    setIsModalOpen(true);
+  const handleRemoveItem = (id) => {
+    dispatch(removeFromCart(id));
+    message.success('Đã xóa sản phẩm khỏi giỏ hàng');
   };
 
-  const handleEditAddress = (address) => {
-    setEditingAddress(address);
-    setIsModalOpen(true);
+  const handleIncrease = (item) => {
+    dispatch(updateQuantity({ id: item.id, quantity: item.quantity + 1 }));
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingAddress(null);
-  };
-
-   const handleremoveFromCart = () => { 
-    message.success('xoá thành công')
-    dispatch(removeFromCart(product.id)); 
-    console.log('Product add to cart', product.id)
-  }
-
-  const handleSubmitAddress = (values) => {
-    if (editingAddress) {
-      setAddressList(addressList.map((a) => a.id === editingAddress.id ? { ...a, ...values } : a));
-      message.success('Cập nhật địa chỉ thành công!');
-    } else {
-      setAddressList([...addressList, { id: Date.now().toString(), ...values, isDefault: false }]);
-      message.success('Thêm địa chỉ thành công!');
+  const handleDecrease = (item) => {
+    if (item.quantity > 1) {
+      dispatch(updateQuantity({ id: item.id, quantity: item.quantity - 1 }));
     }
-    handleCloseModal();
   };
 
-  const handlePlaceOrder = async () => {
+  const executeOrder = async (paymentDetails = null) => {
     try {
       setIsPlacingOrder(true);
-      const currentAddress = addressList.find((a) => a.id === selectedAddress);
+      const currentAddress = addressList.find((a) => a.id === selectedAddress) || defaultAddress;
 
       const orderData = {
         items: cartItems,
         shippingAddress: currentAddress,
         paymentMethod: selectedPayment?.title,
-        shippingFee: shippingFee,
-        discount: discount,
+        paymentDetails,
+        shippingFee,
+        discount,
         total: finalTotal,
         voucherCode: appliedVoucher ? appliedVoucher.code : null,
       };
@@ -170,12 +158,43 @@ function Payment() {
 
       message.success('Đặt hàng thành công!');
       navigate('/ordersuccess', { state: { orderData: finalOrderData } });
-    } catch (error) {
-      message.warning('Vui lòng đăng nhập để đặt hàng!');
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      message.error(err?.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
     } finally {
       setIsPlacingOrder(false);
     }
+  };
+
+  const handlePlaceOrder = () => {
+    if (!profile) {
+      message.warning('Vui lòng đăng nhập để đặt hàng!');
+      return navigate('/login');
+    }
+
+    const currentAddress = addressList.find((a) => a.id === selectedAddress);
+    if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
+      return message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
+    }
+
+    if (cartItems.length === 0) {
+      return message.warning('Giỏ hàng của bạn đang trống!');
+    }
+
+    if (payment === 'bank') {
+      setIsModalbankOpen(true);
+      return;
+    } 
+    if (payment === 'credit') {
+      setIsCardPaymentModal(true);
+      return;
+    } 
+    if (payment === 'wallet') {
+      setIsEWalletPaymentModal(true);
+      return;
+    }
+
+    executeOrder();
   };
 
   if (isLoading) {
@@ -187,24 +206,6 @@ function Payment() {
       </AppLayout>
     );
   }
-
-  const handleIncrease = (item) => {                                                                                                                                                                                                                                                                                                                                                                                                                    
-    dispatch(updateQuantity({                                                                                                                                   
-      id: item.id,                                                                                                                                           
-      quantity: item.quantity + 1                                                                                                                                            
-    }));     
-    console.log(item)                                                                                                                                                       
-  };                                                                                                                                                                
-  
-  const handleDecrease = (item) => {                                                                                                                                                                                                                                                       
-    if (item.quantity > 1) {                                                                                                                                                                                                                                                                                                              
-      dispatch(updateQuantity({                                                                                                                                 
-        id: item.id,                                                                                                                                         
-        quantity: item.quantity - 1                                                                                                                                       
-      }));                                                                                                                                                        
-    }                                                                                                                                                               
-  };         
-
 
   return (
     <AppLayout>
@@ -229,47 +230,31 @@ function Payment() {
                 <Image src={item.image} width={60} height={60} preview={false} style={{ borderRadius: 8, objectFit: 'cover' }} />
                 <div>
                   <Text strong style={{ display: 'block' }}>{item.name}</Text>
-                  <Text type="secondary" style={{ fontSize: 12 }}>Màu: {item.color} | Size: {item.size}</Text>
+                  <Text type="secondary" style={{ fontSize: 12 }}>Màu: {item.color || 'N/A'} | Size: {item.size || 'N/A'}</Text>
                 </div>
               </div>
               <Text strong>{item.price.toLocaleString('vi-VN')}đ</Text>
-                  <div style={{ margin: 'auto',alignItems: 'center',textAlign: 'center', width: 'fit-Content' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e5e5e5', borderRadius: 6, padding: '2px 8px' }}>
-                    <span onClick={() => handleDecrease(item)} style={{ cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}>−</span>                                           
-                    <span style={{ minWidth: 20, textAlign: 'center', fontSize: 13 }}>{item.quantity}</span>                                                                          
-                    <span onClick={() => handleIncrease(item)} style={{ cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}>+</span>                                                                                                                                                                                               
+              <div style={{ margin: 'auto', alignItems: 'center', textAlign: 'center', width: 'fit-content' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #e5e5e5', borderRadius: 6, padding: '2px 8px' }}>
+                  <span onClick={() => handleDecrease(item)} style={{ cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}>−</span>
+                  <span style={{ minWidth: 20, textAlign: 'center', fontSize: 13 }}>{item.quantity}</span>
+                  <span onClick={() => handleIncrease(item)} style={{ cursor: 'pointer', userSelect: 'none', padding: '0 8px' }}>+</span>
                 </div>
-                </div>
+              </div>
               <Text strong style={{ textAlign: 'right' }}>{(item.price * item.quantity).toLocaleString('vi-VN')}đ</Text>
-              <Button
-              onClick={handleremoveFromCart}
-              type="text" danger icon={<DeleteOutlined />} />
+              <Button onClick={() => handleRemoveItem(item.id)} type="text" danger icon={<DeleteOutlined />} />
             </div>
           ))}
         </Card>
 
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
-            <Card style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
-              <Title level={4} style={{ margin: 0 }}>Địa chỉ nhận hàng</Title>
-              <Text type="secondary">Vui lòng kiểm tra và xác nhận thông tin địa chỉ giao hàng của bạn.</Text>
-              
-              {addressList.map((address) => (
-                <OptionAddress
-                  onEdit={handleEditAddress}
-                  key={address.id}
-                  item={address}
-                  isSelected={selectedAddress === address.id}
-                  onSelect={() => setSelectedAddress(address.id)}
-                />
-              ))}
+            <AddressSection
+              selectedAddressId={selectedAddress}
+              onSelectAddress={setSelectedAddress}
+            />
 
-              <Button onClick={handleAddAddress} type="dashed" block icon={<PlusOutlined />} style={{ marginTop: 12, height: 48, borderRadius: 8 }}>
-                Thêm địa chỉ mới
-              </Button>
-            </Card>
-
-           <Card style={{ borderRadius: 10, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
+            <Card style={{ borderRadius: 10, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
               <div style={{ marginBottom: 16 }}>
                 <Title level={4} style={{ margin: 0, fontSize: 16 }}>Phương thức giao hàng</Title>
                 <Text type="secondary" style={{ fontSize: 12 }}>Chọn phương thức giao hàng phù hợp với bạn.</Text>
@@ -283,6 +268,7 @@ function Payment() {
                 ))}
               </Row>
             </Card>
+
             <Card style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
               <div style={{ marginBottom: 8 }}>
                 <Title level={4} style={{ margin: 0 }}>Phương thức thanh toán</Title>
@@ -300,11 +286,11 @@ function Payment() {
           <Col xs={24} lg={8}>
             <Card style={{ borderRadius: 12, position: 'sticky', top: 24 }} styles={{ body: { padding: 24 } }}>
               <Title level={5} style={{ margin: 0, marginBottom: 16 }}>Thông tin đơn hàng</Title>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Tạm tính</Text>
-                  <Text>{(subtotal).toLocaleString('vi-VN')}đ</Text>
+                  <Text>{subtotal.toLocaleString('vi-VN')}đ</Text>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Text type="secondary">Phí vận chuyển</Text>
@@ -317,10 +303,8 @@ function Payment() {
                   </Text>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Text type="secondary"> Phương thức thanh toán</Text>
-                  <Text style={{ color: discount > 0 ? '#000000' : '#111' }}>
-                   {selectedPayment.title}
-                  </Text>
+                  <Text type="secondary">Phương thức thanh toán</Text>
+                  <Text>{selectedPayment?.title}</Text>
                 </div>
               </div>
 
@@ -329,7 +313,7 @@ function Payment() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Title level={5} style={{ margin: 0 }}>Tổng cộng</Title>
                 <span style={{ fontSize: 22, fontWeight: 700, color: '#001529' }}>
-                    {finalTotal.toLocaleString('vi-VN')}đ
+                  {finalTotal.toLocaleString('vi-VN')}đ
                 </span>
               </div>
 
@@ -359,32 +343,42 @@ function Payment() {
           </Col>
         </Row>
 
-        <Modal title={editingAddress ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"} open={isModalOpen} onCancel={handleCloseModal} footer={null} width={500} centered>
-          <Form form={form} layout="vertical" onFinish={handleSubmitAddress} initialValues={editingAddress || { name: '', phone: '', address: '' }} style={{ marginTop: 16 }}>
-            <Form.Item name="name" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
-              <Input size="large" placeholder="Nguyễn Văn A" />
-            </Form.Item>
-            <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập SĐT!' }, { pattern: /^[0-9]{10,11}$/, message: 'SĐT không hợp lệ!' }]}>
-              <Input size="large" placeholder="0912345678" />
-            </Form.Item>
-            <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}>
-              <Input.TextArea rows={3} size="large" placeholder="Số nhà, đường, quận, thành phố" />
-            </Form.Item>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <Button size="large" onClick={handleCloseModal}>Hủy</Button>
-              <Button type="primary" size="large" htmlType="submit" style={{ background: '#001529', borderColor: '#001529' }}>
-                Lưu địa chỉ
-              </Button>
-            </div>
-          </Form>
-        </Modal>
-
         <VoucherModal
           open={isVoucherOpen}
           onClose={() => setIsVoucherOpen(false)}
           onApply={handleApplyVoucher}
           vouchers={vouchers}
           isLoading={isVoucherLoading}
+        />
+
+        <AddBankModal
+          amount={finalTotal}
+          open={isModalbankOpen}
+          onCancel={() => setIsModalbankOpen(false)}
+          onConfirm={(bankData) => {
+            setIsModalbankOpen(false);
+            executeOrder(bankData);
+          }}
+        />
+
+        <CardPaymentModal
+          amount={finalTotal}
+          open={isCardPaymentModal}
+          onCancel={() => setIsCardPaymentModal(false)}
+          onConfirm={(cardData) => {
+            setIsCardPaymentModal(false);
+            executeOrder(cardData);
+          }}
+        />
+
+        <EWalletPaymentModal
+          amount={finalTotal}
+          open={isEWalletPaymentModal}
+          onCancel={() => setIsEWalletPaymentModal(false)}
+          onConfirm={(walletData) => {
+            setIsEWalletPaymentModal(false);
+            executeOrder(walletData);
+          }}
         />
       </main>
     </AppLayout>

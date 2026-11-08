@@ -3,6 +3,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import authReducer from '@/features/auth/authSlice';
 import productReducer from '@/features/product/productSlice';
 import cartReducer from '../features/cartSlice/index';
+import addressReducer from '../features/address/addressSlice'; 
 
 const storage = {
   getItem: (key) => Promise.resolve(window.localStorage.getItem(key)),
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   products: productReducer,
   cart: cartReducer,
+  address: addressReducer,
 });
 
 const persistConfig = {

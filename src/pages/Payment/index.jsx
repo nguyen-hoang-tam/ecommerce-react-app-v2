@@ -2,19 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Card, Row, Col, Typography, Button, Divider, Breadcrumb,
-  Spin, Form, Modal, Input, message
+  Card, Row, Col, Typography, Button, Divider, Breadcrumb, Spin, message
 } from 'antd';
 import {
-  ArrowLeftOutlined, ArrowRightOutlined, PlusOutlined,
+  ArrowLeftOutlined, ArrowRightOutlined,
   CarOutlined, ThunderboltOutlined, ShopOutlined,
   CreditCardOutlined, BankOutlined, WalletOutlined,
   SafetyCertificateOutlined, TagOutlined,
 } from '@ant-design/icons';
 
 import AppLayout from '../../components/layout/AppLayout';
+import AddressSection from '../../components/address/AddressSection';
 import OptionCard from '../../components/card/OptionCard';
-import OptionAddress from '../../components/card/OptionAddress';
 import VoucherModal from '../../components/modal/VoucherModal';
 import AddBankModal from '../../components/modal/AddBankModal';
 import EWalletPaymentModal from '../../components/modal/EWalletPaymentModal';
@@ -22,6 +21,7 @@ import CardPaymentModal from '../../components/modal/CardPaymentModal';
 import { fetchProductById } from '@/features/product/productSlice';
 import { getVouchersAPI } from '@/features/auth/voucherAPI';
 import { createOrderAPI } from '@/features/order/orderAPI';
+import { setAddressList } from '@/features/address/addressSlice';
 
 const { Title, Text } = Typography;
 
@@ -39,13 +39,13 @@ export const paymentMethods = [
 ];
 
 function Payment() {
-
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { id } = useParams();
 
   const { profile } = useSelector((state) => state.auth);
   const { currentProduct: product, isLoading, error } = useSelector((state) => state.products);
+  const { list: addressList } = useSelector((state) => state.address);
 
   const [shipping, setShipping] = useState('standard');
   const [payment, setPayment] = useState('cod');
@@ -54,29 +54,31 @@ function Payment() {
   const [isModalbankOpen, setIsModalbankOpen] = useState(false);
   const [isCardPaymentModal, setIsCardPaymentModal] = useState(false);
   const [isEWalletPaymentModal, setIsEWalletPaymentModal] = useState(false);
-  
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(null);
-  const [form] = Form.useForm();
 
   const [isVoucherOpen, setIsVoucherOpen] = useState(false);
   const [vouchers, setVouchers] = useState([]);
   const [isVoucherLoading, setIsVoucherLoading] = useState(false);
-  
+
   const [discount, setDiscount] = useState(0);
   const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const defaultAddress = {
-  id: 'default',
-  name: profile?.fullname ?? null,      
-  phone: profile?.phone ?? null,
-  address: profile?.address ?? null,
-  isDefault: true,
-};
-  
-  const [addressList, setAddressList] = useState([defaultAddress]);
+    id: 'default',
+    name: profile?.fullname ?? null,
+    phone: profile?.phone ?? null,
+    address: profile?.address ?? null,
+    isDefault: true,
+  };
+
   const [selectedAddress, setSelectedAddress] = useState(defaultAddress.id);
+
+  useEffect(() => {
+    if (profile && addressList.length === 0) {
+      dispatch(setAddressList([defaultAddress]));
+      setSelectedAddress('default');
+    }
+  }, [profile, addressList.length, dispatch]);
 
   useEffect(() => {
     if (id) dispatch(fetchProductById(id));
@@ -126,110 +128,66 @@ function Payment() {
     message.success(`Áp dụng ${voucher.code} thành công!`);
   };
 
-  const handleAddAddress = () => {
-    setEditingAddress(null);
-    setIsModalOpen(true);
-  };
+  const executeOrder = async (paymentDetails = null) => {
+    try {
+      setIsPlacingOrder(true);
 
-  const handleEditAddress = (address) => {
-    setEditingAddress(address);
-    setIsModalOpen(true);
-  };
+      const currentAddress = addressList.find((a) => a.id === selectedAddress) || defaultAddress;
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setEditingAddress(null);
-    setIsCardPaymentModal(false);
-    setIsEWalletPaymentModal(false);
+      if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
+        message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
+        return;
+      }
 
-
-  };
-
-  const handleSubmitAddress = (values) => {
-    if (editingAddress) {
-      setAddressList(addressList.map((a) =>
-        a.id === editingAddress.id ? { ...a, ...values } : a
-      ));
-      message.success('Cập nhật địa chỉ thành công!');
-    } else {
-      const newAddress = {
-        id: Date.now().toString(),
-        ...values,
-        isDefault: false,
+      const orderData = {
+        items: [{
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          quantity,
+          image: product.image,
+        }],
+        shippingAddress: currentAddress,
+        paymentMethod: selectedPayment?.title,
+        paymentDetails,
+        shippingFee,
+        discount,
+        total: finalTotal,
+        voucherCode: appliedVoucher ? appliedVoucher.code : null,
       };
-      setAddressList([...addressList, newAddress]);
-      message.success('Thêm địa chỉ thành công!');
+
+      const newOrderId = await createOrderAPI(orderData);
+      const finalOrderData = { ...orderData, orderId: newOrderId };
+
+      message.success('Đặt hàng thành công!');
+      navigate('/ordersuccess', { state: { orderData: finalOrderData } });
+    } catch (err) {
+      console.error(err);
+      message.error(err?.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
+    } finally {
+      setIsPlacingOrder(false);
     }
-    handleCloseModal();
-  };
-
-  const executeOrder = async () => {
-  try {
-    setIsPlacingOrder(true);
-
-    const currentAddress = addressList.find((a) => a.id === selectedAddress);
-
-    if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
-      message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
-      return;
-    }
-
-    const orderData = {
-      items: [{
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity,
-        image: product.image,
-      }],
-      shippingAddress: currentAddress,
-      paymentMethod: selectedPayment?.title,
-      shippingFee,
-      discount,
-      total: finalTotal,
-      voucherCode: appliedVoucher ? appliedVoucher.code : null,
-    };
-
-    const newOrderId = await createOrderAPI(orderData);
-    const finalOrderData = { ...orderData, orderId: newOrderId };  
-
-    message.success('Đặt hàng thành công!');
-    navigate('/ordersuccess', { state: { orderData: finalOrderData } });
-  } catch (err) {
-    console.error(err);
-    message.error(err?.message || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
-  } finally {
-    setIsPlacingOrder(false);
-  }
   };
 
   const handlePlaceOrder = () => {
-  if (!profile) {
-    message.warning('Vui lòng đăng nhập để đặt hàng!');
-    return;
-  }
+    if (!profile) {
+      message.warning('Vui lòng đăng nhập để đặt hàng!');
+      return;
+    }
 
-  const currentAddress = addressList.find((a) => a.id === selectedAddress);
-  if (!currentAddress?.address || !currentAddress?.name || !currentAddress?.phone) {
-    message.warning('Vui lòng nhập đầy đủ Tên, Số điện thoại và Địa chỉ!');
-    return;
-  }
+    if (payment === 'bank') {
+      setIsModalbankOpen(true);
+      return;
+    } else if (payment === 'credit') {
+      setIsCardPaymentModal(true);
+      return;
+    } else if (payment === 'wallet') {
+      setIsEWalletPaymentModal(true);
+      return;
+    }
 
-  if (payment === 'bank') {
-    setIsModalbankOpen(true); 
-    return; 
-  } 
-  else if (payment === 'credit') {
-    setIsCardPaymentModal(true);
-    return;
-  } 
-    else if (payment === 'wallet') {
-    setIsEWalletPaymentModal(true);
-    return;
-  } 
-
-  executeOrder();
-};
+    executeOrder();
+  };
 
   if (error) return <p>Lỗi: {error}</p>;
 
@@ -254,23 +212,10 @@ function Payment() {
 
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={16}>
-            <Card style={{ borderRadius: 12, marginBottom: 16 }} styles={{ body: { padding: 24 } }}>
-              <Title level={4} style={{ margin: 0 }}>Địa chỉ nhận hàng</Title>
-              <Text type="secondary">Vui lòng kiểm tra và xác nhận thông tin địa chỉ giao hàng của bạn.</Text>
-              {addressList.map((address) => (
-                <OptionAddress
-                  onEdit={handleEditAddress}
-                  key={address.id}
-                  item={address}
-                  isSelected={selectedAddress === address.id}
-                  onSelect={() => setSelectedAddress(address.id)}
-                />
-              ))}
-
-              <Button onClick={handleAddAddress} type="dashed" block icon={<PlusOutlined />} style={{ marginTop: 12, height: 48, borderRadius: 8 }}>
-                Thêm địa chỉ mới
-              </Button>
-            </Card>
+            <AddressSection
+              selectedAddressId={selectedAddress}
+              onSelectAddress={setSelectedAddress}
+            />
 
             <Card style={{ borderRadius: 10, marginBottom: 16 }} styles={{ body: { padding: 20 } }}>
               <div style={{ marginBottom: 16 }}>
@@ -396,43 +341,6 @@ function Payment() {
           </Col>
         </Row>
 
-        <Modal
-          title={editingAddress ? "Chỉnh sửa địa chỉ" : "Thêm địa chỉ mới"}
-          open={isModalOpen}
-          onCancel={handleCloseModal}
-          footer={null}
-          width={500}
-          centered
-          destroyOnHidden
-        >
-          <Form 
-            form={form} 
-            layout="vertical" 
-            onFinish={handleSubmitAddress} 
-            initialValues={editingAddress || { name: '', phone: '', address: '' }} 
-            style={{ marginTop: 16 }}
-          >
-            <Form.Item name="name" label="Họ và tên" rules={[{ required: true, message: 'Vui lòng nhập họ tên!' }]}>
-              <Input size="large" placeholder="Nguyễn Văn A" />
-            </Form.Item>
-
-            <Form.Item name="phone" label="Số điện thoại" rules={[{ required: true, message: 'Vui lòng nhập SĐT!' }, { pattern: /^[0-9]{10,11}$/, message: 'SĐT không hợp lệ!' }]}>
-              <Input size="large" placeholder="0912345678" />
-            </Form.Item>
-
-            <Form.Item name="address" label="Địa chỉ" rules={[{ required: true, message: 'Vui lòng nhập địa chỉ!' }]}>
-              <Input.TextArea rows={3} size="large" placeholder="Số nhà, đường, quận, thành phố" />
-            </Form.Item>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <Button size="large" onClick={handleCloseModal}>Hủy</Button>
-              <Button type="primary" size="large" htmlType="submit" style={{ background: '#001529', borderColor: '#001529' }}>
-                Lưu địa chỉ
-              </Button>
-            </div>
-          </Form>
-        </Modal>
-
         <VoucherModal
           open={isVoucherOpen}
           onClose={() => setIsVoucherOpen(false)}
@@ -445,19 +353,19 @@ function Payment() {
           amount={finalTotal}
           open={isModalbankOpen}
           onCancel={() => setIsModalbankOpen(false)}
-          onConfirm={() => {
-            setIsModalbankOpen(false);   
-            executeOrder();              
+          onConfirm={(bankData) => {
+            setIsModalbankOpen(false);
+            executeOrder(bankData);
           }}
         />
 
-         <CardPaymentModal
+        <CardPaymentModal
           amount={finalTotal}
           open={isCardPaymentModal}
           onCancel={() => setIsCardPaymentModal(false)}
-          onConfirm={() => {
-            setIsCardPaymentModal(false);   
-            executeOrder();              
+          onConfirm={(cardData) => {
+            setIsCardPaymentModal(false);
+            executeOrder(cardData);
           }}
         />
 
@@ -465,9 +373,9 @@ function Payment() {
           amount={finalTotal}
           open={isEWalletPaymentModal}
           onCancel={() => setIsEWalletPaymentModal(false)}
-          onConfirm={() => {
-            setIsEWalletPaymentModal(false);   
-            executeOrder();              
+          onConfirm={(walletData) => {
+            setIsEWalletPaymentModal(false);
+            executeOrder(walletData);
           }}
         />
       </main>

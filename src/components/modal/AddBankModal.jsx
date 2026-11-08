@@ -49,25 +49,26 @@ const BankTransferModal = ({
         </Divider>
 
         <div style={{ display: "flex", alignItems: "center", padding: "14px 16px", border: "1px solid #e8e8e8", borderRadius: 10, gap: 16 }}>
-          <div style={{ width: "38%", display: "flex", alignItems: "center", gap: 10, borderRight: "1px solid #e8e8e8", minHeight: 48 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#e8f7ee", color: "#16864a", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
-              V
-            </div>
-
-            <Text strong style={{ fontSize: 13 }}>{bankName}</Text>
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              <Text strong style={{ fontSize: 14 }}>STK: {accountNumber}</Text>
-              <Button type="text" size="small" icon={<CopyOutlined />} onClick={handleCopy} style={{ color: "#1677ff" }} />
-            </div>
-
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              Chủ TK: {accountName}
-            </Text>
-          </div>
+        <div style={{ width: "38%", display: "flex", alignItems: "center", gap: 10, borderRight: "1px solid #e8e8e8" }}>
+    <img 
+      src="https://cdn.haitrieu.com/wp-content/uploads/2022/01/Logo-VietinBank-CTG-Ori.png" 
+      alt="logo" 
+      style={{ width: 32, height: 32, objectFit: 'contain' }} 
+    />
+    <Text strong style={{ fontSize: 13 }}>{bankName}</Text>
         </div>
+
+         <div style={{ flex: 1, minWidth: 0 }}>
+           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+             <Text strong style={{ fontSize: 14 }}>STK: {accountNumber}</Text>
+             <Button type="text" size="small" icon={<CopyOutlined />} onClick={handleCopy} style={{ color: "#1677ff" }} />
+           </div>
+
+           <Text type="secondary" style={{ fontSize: 12 }}>
+             Chủ TK: {accountName}
+           </Text>
+         </div>
+       </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 4px", borderBottom: "1px solid #f0f0f0", marginBottom: 24 }}>
           <Text type="secondary">Số tiền thanh toán</Text>

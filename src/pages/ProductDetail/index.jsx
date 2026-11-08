@@ -79,7 +79,7 @@ function ProductDetail() {
               <Image
                 src={product.image}
                 alt={product.name}
-                style={{ width: '800px',height: '800px', borderRadius: 12, objectFit: 'cover' }}
+                style={{ width: '100%',height: '100%', borderRadius: 12, objectFit: 'cover', aspectRatio: '1/1' }}
                 placeholder
               />
             </Col>

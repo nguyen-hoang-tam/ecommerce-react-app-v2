@@ -16,12 +16,12 @@ const CardPaymentModal = ({
 }) => {
   const [form] = Form.useForm();
 
-  const imgBank = "https://shinhanfinance.com.vn/-/nginx-cms/assets/site/Th%E1%BA%BB-t%C3%ADn-d%E1%BB%A5ng-3.8-new_Ti%E1%BA%BFng-Vi%E1%BB%87t-1-1.png"
-
   const handleConfirm = async () => {
     try {
       const values = await form.validateFields();
       onConfirm?.(values);
+      message.success("Đã xác nhận thanh toán bằng thẻ");
+      navigate("/PaymentSuccess");
     } catch {
       return;
     }
@@ -54,18 +54,6 @@ const CardPaymentModal = ({
       >
         Vui lòng nhập thông tin thẻ để thanh toán đơn hàng
       </Text>
-
-     <img
-      src={imgBank}
-       style={{
-        width: "100%",
-        objectFit: "contain",
-        borderRadius: "32px", 
-        border: "1px solid #f0f0f0", 
-        padding: 2, 
-        marginBottom: 16,
-     }}
-    />
 
       <Form
         form={form}

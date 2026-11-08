@@ -47,6 +47,7 @@ const EWalletPaymentModal = ({
   const handleConfirm = () => {
     onConfirm?.({
       wallet: selectedWallet,
+      navigation: `/Payment/${selectedWallet}`,
     });
   };
 
