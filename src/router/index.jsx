@@ -1,15 +1,23 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Signin from '@/pages/Auth/signin';
 import Register from '@/pages/Auth/register';
-import Home from '../pages/Home/index';
-import ProductDetail from '../pages/ProductDetail/index'
-import Payment from '../pages/Payment/index'
-import OrderSuccess from '../pages/OrderSuccess/index'
-import AddToCartSuccess from '../pages/AddToCartSuccess/index'
-import ShoppingCart from '../pages/ShoppingCart/index'
-
+import Home from '@/pages/Home';
+import ProductDetail from '@/pages/ProductDetail';
+import Payment from '@/pages/Payment';
+import OrderSuccess from '@/pages/OrderSuccess';
+import AddToCartSuccess from '@/pages/AddToCartSuccess';
+import ShoppingCart from '@/pages/ShoppingCart';
+import OrderDetail from '@/pages/OrderDetail';
 
 export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Navigate to="/home" replace />,
+  },
+  {
+    path: '/home',
+    element: <Home />,
+  },
   {
     path: '/login',
     element: <Signin />,
@@ -19,10 +27,6 @@ export const router = createBrowserRouter([
     element: <Register />,
   },
   {
-    path: '/home',
-    element: <Home />,
-  },
-    {
     path: '/productdetail/:id',
     element: <ProductDetail />,
   },
@@ -30,16 +34,24 @@ export const router = createBrowserRouter([
     path: '/payment/:id',
     element: <Payment />,
   },
-   {
+  {
     path: '/ordersuccess',
     element: <OrderSuccess />,
   },
-   {
+  {
     path: '/addtocart/:id',
     element: <AddToCartSuccess />,
   },
   {
     path: '/shoppingcart',
     element: <ShoppingCart />,
+  },
+  {
+    path: '/orderdetail/:id',
+    element: <OrderDetail />,
+  },
+  {
+    path: '*',
+    element: <Navigate to="/home" replace />,
   },
 ]);

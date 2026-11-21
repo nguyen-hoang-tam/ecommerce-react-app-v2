@@ -1,31 +1,46 @@
-import React from 'react';
-import AppLayout from '../../components/layout/AppLayout';
-import { useLocation, useNavigate, Link, useParams } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
-  CheckOutlined,
-  HomeOutlined,
-  FileTextOutlined,
-  UserOutlined,
-  PhoneOutlined,
-  EnvironmentOutlined,
-  CreditCardOutlined,
-  TruckOutlined,
-  ClockCircleOutlined,
-  ShoppingOutlined,
+  Card, Row, Col, Typography, Button, Divider, Breadcrumb, Steps, Space, Modal, message, Image
+} from 'antd';
+import {
+  ArrowLeftOutlined, TruckOutlined, ShoppingCartOutlined,
+  CustomerServiceOutlined, StopOutlined, CopyOutlined,
+  UserOutlined, EnvironmentOutlined, PhoneOutlined,
+  CreditCardOutlined, CheckCircleOutlined, CalendarOutlined, InfoCircleOutlined
 } from '@ant-design/icons';
-import { Card, Row, Col, Typography, Button, Divider, Image, Result } from 'antd';
+
+import AppLayout from '../components/layout/AppLayout';
 
 const { Title, Text } = Typography;
 
-function OrderSuccess() {
+const formatDate = (date) => {
+  if (!date) return '--';
 
-  const { id } = useParams()
+  const value = date?.seconds
+    ? new Date(date.seconds * 1000)
+    : new Date(date);
+
+  if (Number.isNaN(value.getTime())) return '--';
+
+  return value.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+function OrderDetail({ onCancelOrder, onReorder, onContact }) {
+
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const orderData = location.state?.orderData;
+   const orderData = location.state?.orderData;
 
-  if (!orderData) {
+    if (!orderData) {
     return (
       <AppLayout>
         <div style={{ padding: 50, display: 'flex', justifyContent: 'center' }}>
@@ -40,46 +55,141 @@ function OrderSuccess() {
     );
   }
 
+  const [isCancelling, setIsCancelling] = useState(false);
+
+
+  const isDelivered = status === 'delivered';
+  const canCancel = status === 'pending';
+
+
+  const handleCancelOrder = () => {
+    Modal.confirm({
+      title: 'Xác nhận hủy đơn hàng',
+      content: 'Bạn có chắc chắn muốn hủy đơn hàng này không?',
+      okText: 'Xác nhận hủy',
+      cancelText: 'Quay lại',
+      okButtonProps: { danger: true, loading: isCancelling },
+      onOk: async () => {
+        if (!onCancelOrder) {
+          message.warning('Chưa cấu hình chức năng hủy đơn hàng!');
+          return;
+        }
+
+        try {
+          setIsCancelling(true);
+          await onCancelOrder(orderId);
+          message.success('Hủy đơn hàng thành công!');
+        } catch (error) {
+          message.error(error?.message || 'Hủy đơn hàng thất bại!');
+          throw error;
+        } finally {
+          setIsCancelling(false);
+        }
+      },
+    });
+  };
+
+  const handleReorder = async () => {
+    if (onReorder) {
+      await onReorder();
+      return;
+    }
+
+    navigate('/cart');
+  };
+
+  const handleContact = () => {
+    if (onContact) {
+      onContact();
+      return;
+    }
+
+    message.info('Vui lòng liên hệ bộ phận hỗ trợ!');
+  };
+
   const firstItem = orderData.items[0];
   const subtotal = firstItem.price * firstItem.quantity;
-  const orderDate = new Date(orderData.createdAt).toLocaleString('vi-VN');
 
   return (
     <AppLayout>
-      <main style={{ padding: '40px 50px', background: '#f7f8fa', minHeight: 'calc(100vh - 54px)' }}>
-        <Row gutter={[20, 20]} align="top">
+      <main style={{ padding: '24px 50px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div>
+            <Breadcrumb style={{ marginBottom: 12 }}>
+              <Breadcrumb.Item>
+                <Link to="/">Trang chủ</Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Item>
+                <Link to="/orders">Đơn hàng</Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Item>Chi tiết đơn hàng</Breadcrumb.Item>
+            </Breadcrumb>
+          </div>
+
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(-1)}>
+            Quay lại
+          </Button>
+        </div>
+
+        <Row gutter={[24, 16]}>
           <Col xs={24} lg={16}>
-            <Card bordered={false} style={{ borderRadius: 12, marginBottom: 20 }} styles={{ body: { padding: 32 } }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ width: 58, height: 58, margin: '0 auto 20px', borderRadius: '50%', background: '#52c878', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, boxShadow: '0 0 0 10px #edf9f0' }}>
-                  <CheckOutlined />
-                </div>
-                <Title level={2} style={{ margin: '0 0 10px', color: '#001529' }}>Đặt hàng thành công!</Title>
-                <Text type="secondary" style={{ display: 'block', maxWidth: 620, margin: '0 auto', lineHeight: 1.7 }}>
-                  Cảm ơn bạn đã mua sắm tại MyApp. Đơn hàng của bạn đã được ghi nhận và đang được xử lý. Chúng tôi sẽ liên hệ với bạn sớm nhất.
-                </Text>
+            <Card
+              style={{ borderRadius: 12, marginBottom: 16 }}
+              styles={{ body: { padding: 24 } }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Title level={5} style={{ margin: 0 }}>
+                  Trạng thái đơn hàng
+                </Title>
               </div>
 
-              <div style={{ marginTop: 30, padding: 16, background: '#f0f6ff', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#e3efff', color: '#1677ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}>
-                  <ShoppingOutlined />
-                </div>
-                <div>
-                  <Text type="secondary" style={{ display: 'block', fontSize: 12 }}>Mã đơn hàng</Text>
-                  <Text strong style={{ color: '#1677ff', fontSize: 18 }}>#{orderData.orderId}</Text>
-                </div>
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <ClockCircleOutlined style={{ color: '#1677ff' }} />
-                  <div>
-                    <Text type="secondary" style={{ display: 'block', fontSize: 12 }}>Thời gian đặt hàng</Text>
-                    <Text>{orderDate}</Text>
-                  </div>
-                </div>
-              </div>
+              <Steps
+                current={0}
+                responsive
+                labelPlacement="vertical"
+                items={[
+                  { title: 'Chờ xử lý' },
+                  { title: 'Đã xác nhận' },
+                  { title: 'Đang giao hàng' },
+                  { title: 'Thành công' },
+                ]}
+              />
+
+              <Divider style={{ margin: '24px 0 20px' }} />
+
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={8}>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: 6 }}>
+                    Mã đơn hàng
+                  </Text>
+                  <Space size={4}>
+                    <Text strong>{orderData.orderId}</Text>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<CopyOutlined />}
+                    />
+                  </Space>
+                </Col>
+
+                <Col xs={24} md={8}>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: 6 }}>
+                    <CalendarOutlined /> Ngày đặt
+                  </Text>
+                  <Text strong>{ formatDate(orderData.createdAt) }</Text>
+                </Col>
+
+                <Col xs={24} md={8}>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: 6 }}>
+                    Phương thức thanh toán
+                  </Text>
+                  <Text strong>{orderData.paymentMethod}</Text>
+                </Col>
+              </Row>
             </Card>
 
             <Card bordered={false} style={{ borderRadius: 12, marginBottom: 20 }} styles={{ body: { padding: 24 } }}>
-              <Title level={4} style={{ margin: '0 0 24px' }}>Thông tin giao hàng</Title>
+              <Title level={4} style={{ margin: '0 0 24px', fontSize: 16 }}>Thông tin giao hàng</Title>
               <Row gutter={[32, 24]}>
                 <Col xs={24} md={13}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
@@ -112,20 +222,21 @@ function OrderSuccess() {
               </Row>
             </Card>
 
-            <div style={{ display: 'flex', gap: 14 }}>
-              <Button onClick={() => navigate('/home')} type="primary" size="large" icon={<HomeOutlined />} style={{ minWidth: 220, height: 44, borderRadius: 8 }}>
-                Tiếp tục mua sắm
-              </Button>
-              <Link to={`/orders/${orderData.orderId}`}>
-                <Button size="large" icon={<FileTextOutlined />} style={{ minWidth: 170, height: 44, borderRadius: 8 }}>
-                  Xem đơn hàng
-                </Button>
-              </Link>
-            </div>
+            {canCancel && (
+              <Text type="secondary" style={{ display: 'block', marginTop: 8, fontSize: 12 }}>
+                <InfoCircleOutlined /> Chỉ áp dụng khi đơn hàng ở trạng thái Chờ xử lý.
+              </Text>
+            )}
+
+            {isDelivered && (
+              <div style={{ marginTop: 12, color: '#52c41a' }}>
+                <CheckCircleOutlined /> Đơn hàng đã được giao thành công.
+              </div>
+            )}
           </Col>
 
           <Col xs={24} lg={8}>
-            <Card bordered={false} style={{ borderRadius: 12, position: 'sticky', top: 24 }} styles={{ body: { padding: 24 } }}>
+             <Card bordered={false} style={{ borderRadius: 12}} styles={{ body: { padding: 24 } }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <Title level={5} style={{ margin: 0 }}>Thông tin đơn hàng</Title>
                 <Text type="secondary">{firstItem.quantity} sản phẩm</Text>
@@ -181,15 +292,44 @@ function OrderSuccess() {
                 </div>
               </div>
             </Card>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginTop: 16 }}>
+              <Button
+                type="primary"
+                size="large"
+                icon={<ShoppingCartOutlined />}
+                onClick={handleReorder}
+                style={{ background: '#1677ff', borderColor: '#1677ff', padding: '0 24px' }}
+              >
+                Mua lại
+              </Button>
+
+              <Button
+                size="large"
+                icon={<CustomerServiceOutlined />}
+                onClick={handleContact}
+                style={{ borderColor: '#1677ff', color: '#1677ff' }}
+              >
+                Liên hệ Shop / Hỗ trợ
+              </Button>
+
+              {canCancel && (
+                <Button
+                  danger
+                  size="large"
+                  icon={<StopOutlined />}
+                  onClick={handleCancelOrder}
+                >
+                  Hủy đơn hàng
+                </Button>
+              )}
+            </div>
+
           </Col>
         </Row>
-
-        <div style={{ textAlign: 'center', paddingTop: 70, color: '#607286', fontSize: 12 }}>
-          MyApp ©2026 Created with Ant Design
-        </div>
       </main>
     </AppLayout>
   );
 }
 
-export default OrderSuccess;
+export default OrderDetail;

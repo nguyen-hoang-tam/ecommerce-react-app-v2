@@ -6,12 +6,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import AppLayout from '@/components/layout/AppLayout';
 import bannerImg from '@/images/banner-girl.png';
-import { Grid } from '../../components/product';
-import { ProductCard } from '../../components/product';
-import { RelatedProductCard } from '../../components/product';
+import { Grid } from '../components/product';
+import { ProductCard } from '../components/product';
+import { RelatedProductCard } from '../components/product';
 import { fetchProducts } from '@/features/product';
 
-function Homepage() {
+function Home() {
   
   const { items, isLoading, error } = useSelector((state) => state.products);
 
@@ -89,4 +89,4 @@ function Homepage() {
   );
 }
 
-export default Homepage;
+export default Home;

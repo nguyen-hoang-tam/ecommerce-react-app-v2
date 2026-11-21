@@ -5,7 +5,7 @@ import { Link , useNavigate} from 'react-router-dom';
 import imgBg from '@/assets/img_bg.png';
 import { useDispatch } from 'react-redux';
 import { loginAPI, getUserProfile, loginWithGoogleAPI} from '@/features/auth/authAPI';
-import { authStart, authSuccess, authFailure, setProfile } from '../../../features/auth/authSlice' 
+import { authStart, authSuccess, authFailure, setProfile } from '@/features/auth/authSlice'; 
 
 function Signin() {
     const [form] = Form.useForm();

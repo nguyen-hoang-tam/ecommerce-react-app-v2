@@ -1,55 +1,55 @@
-import AppLayout from '../../components/layout/AppLayout';
+import AppLayout from '../components/layout/AppLayout';
 import { Card, Row, Col, Typography, Button, Divider, Image, Breadcrumb, Spin } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { ShoppingCartOutlined} from '@ant-design/icons';
+import { ShoppingCartOutlined } from '@ant-design/icons';
 import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
 import { fetchProducts, fetchProductById } from '@/features/product/productSlice';
-import { Grid } from '../../components/product';
-import { RelatedProductCard } from '../../components/product';
+import { Grid } from '../components/product';
+import { RelatedProductCard } from '../components/product';
 import { useNavigate } from 'react-router-dom';
-import { addToCart } from '../../features/cartSlice/index'
+import { addToCart } from '@/features/cart';
 
 const { Title, Text, Paragraph } = Typography;
 
 function ProductDetail() {
   const navigate = useNavigate();
 
-    const handleClickCard = () => {
+  const handleClickCard = () => {
     navigate(`/Payment/${id}`);
-  }; 
-
-  const handleAddToCart = () => { 
-    const cartItem = {
-    id: product.id,
-    name: product.name,
-    price: product.price,
-    image: product.image,
-    brand: product.brand,
-    quantity: 1
   };
+
+  const handleAddToCart = () => {
+    const cartItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      brand: product.brand,
+      quantity: 1
+    };
     navigate(`/addtocart/${id}`);
-    dispatch(addToCart(cartItem)); 
+    dispatch(addToCart(cartItem));
     console.log('Product add to cart', cartItem)
   }
-    const dispatch = useDispatch();
-    const { id } = useParams();
-  
-   const { currentProduct: product, items, isLoading, error } = useSelector(
+  const dispatch = useDispatch();
+  const { id } = useParams();
+
+  const { currentProduct: product, items, isLoading, error } = useSelector(
     (state) => state.products
   );
 
-    useEffect(() => {
-    dispatch(fetchProductById(id)); 
-    dispatch(fetchProducts());       
-    }, [dispatch, id]);
-    
-    const relatedProducts = items.filter((p) => p.id !== id).slice(0, 6);
+  useEffect(() => {
+    dispatch(fetchProductById(id));
+    dispatch(fetchProducts());
+  }, [dispatch, id]);
+
+  const relatedProducts = items.filter((p) => p.id !== id).slice(0, 6);
 
 
-    if (error) return <p>Lỗi: {error}</p>;
-    
+  if (error) return <p>Lỗi: {error}</p>;
+
   if (isLoading || !product) {
     return (
       <AppLayout>
@@ -79,7 +79,7 @@ function ProductDetail() {
               <Image
                 src={product.image}
                 alt={product.name}
-                style={{ width: '100%',height: '100%', borderRadius: 12, objectFit: 'cover', aspectRatio: '1/1' }}
+                style={{ width: '100%', height: '100%', borderRadius: 12, objectFit: 'cover', aspectRatio: '1/1' }}
                 placeholder
               />
             </Col>
@@ -119,7 +119,7 @@ function ProductDetail() {
               <Divider style={{ margin: '16px 0' }} />
 
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-                <Text><strong>Danh mục:</strong> { product.brand}</Text>
+                <Text><strong>Danh mục:</strong> {product.brand}</Text>
               </div>
             </Col>
           </Row>
@@ -127,7 +127,7 @@ function ProductDetail() {
 
         <Divider style={{ margin: '40px 0' }} />
 
-         <section style={{ marginTop: 56 }}>
+        <section style={{ marginTop: 56 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <h2 style={{ fontSize: 24, fontWeight: 600, margin: 0 }}>Sản phẩm liên quan</h2>
             <Link to="/shop" style={{ color: '#101010', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Card, Row, Col, Typography, Button, Image, Spin } from 'antd';
 import { ArrowRightOutlined, CheckOutlined, ShoppingCartOutlined } from '@ant-design/icons';
-import AppLayout from '../../components/layout/AppLayout';
+import AppLayout from '../components/layout/AppLayout';
 import { fetchProducts, fetchProductById } from '@/features/product/productSlice';
 
 const { Title, Text } = Typography;

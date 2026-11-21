@@ -6,9 +6,9 @@ import { UserOutlined, LogoutOutlined, ShoppingCartOutlined, HomeOutlined, Delet
 import { doc, deleteDoc } from 'firebase/firestore'; 
 import { deleteUser } from 'firebase/auth'; 
 import ConfirmModal from '../modal/ConfirmModal'
-import { logoutAPI } from '../../features/auth/authAPI';
-import { authLogout } from '../../features/auth/authSlice';
-import { clearCart } from '../../features/cartSlice';
+import { logoutAPI } from '@/features/auth/authAPI';
+import { authLogout } from '@/features/auth/authSlice';
+import { clearCart } from '@/features/cart';
 import { auth, db } from '@/lib/firebase';
 
 const { Header, Footer, Content } = Layout;

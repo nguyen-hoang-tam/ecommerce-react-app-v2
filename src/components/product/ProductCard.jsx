@@ -4,7 +4,7 @@ import { ShoppingCartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { addToCart } from '../../features/cartSlice/index'
+import { addToCart } from '@/features/cart';
 
 function ProductCard({ product }) {
     const { id, name, price, image, brand } = product;

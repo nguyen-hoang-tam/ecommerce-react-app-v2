@@ -2,8 +2,8 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 import authReducer from '@/features/auth/authSlice';
 import productReducer from '@/features/product/productSlice';
-import cartReducer from '../features/cartSlice/index';
-import addressReducer from '../features/address/addressSlice'; 
+import cartReducer from '@/features/cart';
+import addressReducer from '@/features/address/addressSlice'; 
 
 const storage = {
   getItem: (key) => Promise.resolve(window.localStorage.getItem(key)),
