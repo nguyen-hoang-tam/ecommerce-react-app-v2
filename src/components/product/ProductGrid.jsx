@@ -11,7 +11,7 @@ function Grid({
 }) {
   if (isLoading) {
     return (
-      <Row gutter={[24, 24]}>
+      <Row gutter={[16, 24]}>
         {Array.from({ length: skeletonCount }).map((_, i) => (
           <Col {...columns} key={i}>
             <Skeleton.Image active style={{ width: '100%', height: skeletonHeight }} />

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Card, Row, Col, Typography, Button, Divider, Breadcrumb, Steps, Space, Modal, message, Image
@@ -9,10 +10,12 @@ import {
   UserOutlined, EnvironmentOutlined, PhoneOutlined,
   CreditCardOutlined, CheckCircleOutlined, CalendarOutlined, InfoCircleOutlined
 } from '@ant-design/icons';
+import { addToCart } from '@/features/cart';
 
 import AppLayout from '../components/layout/AppLayout';
 
 const { Title, Text } = Typography;
+
 
 const formatDate = (date) => {
   if (!date) return '--';
@@ -34,13 +37,15 @@ const formatDate = (date) => {
 
 function OrderDetail({ onCancelOrder, onReorder, onContact }) {
 
+  const dispatch = useDispatch();
+
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
-   const orderData = location.state?.orderData;
+  const orderData = location.state?.orderData;
 
-    if (!orderData) {
+  if (!orderData) {
     return (
       <AppLayout>
         <div style={{ padding: 50, display: 'flex', justifyContent: 'center' }}>
@@ -89,14 +94,30 @@ function OrderDetail({ onCancelOrder, onReorder, onContact }) {
     });
   };
 
-  const handleReorder = async () => {
-    if (onReorder) {
-      await onReorder();
-      return;
-    }
 
-    navigate('/cart');
-  };
+   const handleReorder = () => {
+  if (!orderData?.items || orderData.items.length === 0) {
+    message.warning('Không có sản phẩm nào để mua lại!');
+    return;
+  }
+  orderData.items.forEach((item) => {
+    const cartItem = {
+      id: item.productId || item.id,
+      name: item.name,
+      price: item.price,
+      image: item.image,
+      brand: item.brand || '',
+      color: item.color || '',
+      size: item.size || '',
+      quantity: item.quantity,
+    };
+    dispatch(addToCart(cartItem));
+    console.log('Product add to cart', cartItem)
+  });
+
+  message.success('Đã thêm các sản phẩm vào giỏ hàng!');
+  navigate('/shoppingcart'); 
+};
 
   const handleContact = () => {
     if (onContact) {
@@ -241,18 +262,19 @@ function OrderDetail({ onCancelOrder, onReorder, onContact }) {
                 <Title level={5} style={{ margin: 0 }}>Thông tin đơn hàng</Title>
                 <Text type="secondary">{firstItem.quantity} sản phẩm</Text>
               </div>
-
-              <div style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
-                <Image src={firstItem.image} width={68} height={68} preview={false} style={{ borderRadius: 8, objectFit: 'cover' }} />
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <Text strong>{firstItem.name}</Text>
-                  <Text strong>{firstItem.brand}</Text>
+              {orderData?.items?.map((item, index) => (
+                <div style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
+                  <Image src={item.image} width={68} height={68} preview={false} style={{ borderRadius: 8, objectFit: 'cover' }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    <Text strong>{item.name}</Text>
+                    <Text strong>{item.brand}</Text>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <Text>x{firstItem.quantity}</Text>
-                  <Text strong style={{ display: 'block', marginTop: 8 }}>{firstItem.price.toLocaleString('vi-VN')}đ</Text>
+                  <Text>x{item.quantity}</Text>
+                  <Text strong style={{ display: 'block', marginTop: 8 }}>{item.price.toLocaleString('vi-VN')}đ</Text>
                 </div>
               </div>
+              ))}
 
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>

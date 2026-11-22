@@ -137,18 +137,20 @@ function OrderSuccess() {
                 <Title level={5} style={{ margin: 0 }}>Thông tin đơn hàng</Title>
                 <Text type="secondary">{firstItem.quantity} sản phẩm</Text>
               </div>
-
+             
+             {orderData?.items?.map((item, index) => (
               <div style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: '1px solid #f0f0f0' }}>
-                <Image src={firstItem.image} width={68} height={68} preview={false} style={{ borderRadius: 8, objectFit: 'cover' }} />
+                <Image src={item.image} width={68} height={68} preview={false} style={{ borderRadius: 8, objectFit: 'cover' }} />
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <Text strong>{firstItem.name}</Text>
-                  <Text strong>{firstItem.brand}</Text>
+                  <Text strong>{item.name}</Text>
+                  <Text strong>{item.brand}</Text>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <Text>x{firstItem.quantity}</Text>
-                  <Text strong style={{ display: 'block', marginTop: 8 }}>{firstItem.price.toLocaleString('vi-VN')}đ</Text>
+                  <Text>x{item.quantity}</Text>
+                  <Text strong style={{ display: 'block', marginTop: 8 }}>{item.price.toLocaleString('vi-VN')}đ</Text>
                 </div>
               </div>
+              ))}
 
               <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>

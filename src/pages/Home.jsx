@@ -33,8 +33,8 @@ function Home() {
 
   if (error) return <p>Lỗi: {error}</p>;
 
-  const featuredProducts = items.slice(0, 6);
-  const suggestedProducts = items.slice(6, 12);
+  const featuredProducts = items.slice(0, 12);
+  const suggestedProducts = items.slice(12, 24);
 
   return (
     <AppLayout>

@@ -63,6 +63,7 @@ function AddressSection({ selectedAddressId, onSelectAddress }) {
               isSelected={selectedAddressId === address.id}
               onSelect={() => onSelectAddress(address.id)}
             />
+            
             <Popconfirm
               title="Xóa địa chỉ này?"
               onConfirm={() => handleDeleteAddress(address.id)}
@@ -74,7 +75,18 @@ function AddressSection({ selectedAddressId, onSelectAddress }) {
                 type="text" 
                 danger 
                 icon={<DeleteOutlined />} 
-                style={{ position: 'absolute',margin: 'auto', top: 40, right: 42, padding: 0, height: 24, width: 24, display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)', 
+                  right: 48, 
+                  padding: 0, 
+                  height: 32, 
+                  width: 32, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center' 
+                }} 
               />
             </Popconfirm>
           </div>
